@@ -1,0 +1,7 @@
+{
+  "profile_name": "default",
+  "description": "Perfil padrao sem regras de dominio especificas.",
+  "auto_functions": {},
+  "fields": {},
+  "relations": {}
+}
