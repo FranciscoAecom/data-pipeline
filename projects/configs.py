@@ -1,5 +1,7 @@
 from functools import lru_cache
 
+from core.validation.rule_engine import find_rule_profile_by_theme_folder
+
 
 DEFAULT_PROJECT_CONFIG = {
     "project_name": "default",
@@ -47,12 +49,33 @@ def get_project_config(project_name=None):
     return dict(DEFAULT_PROJECT_CONFIG)
 
 
+def _resolve_project_name_from_rule_profile(theme_folder):
+    rule_profile = find_rule_profile_by_theme_folder(theme_folder)
+    if not rule_profile:
+        return None
+
+    project_name = str(rule_profile).split("/", 1)[0].strip().lower()
+    if project_name in PROJECT_CONFIGS:
+        return project_name
+    return None
+
+
 def resolve_project_name(theme_folder):
     theme_folder_text = str(theme_folder or "").strip().lower()
+
+    project_name = _resolve_project_name_from_rule_profile(theme_folder_text)
+    if project_name:
+        return project_name
+
+    for project_name in PROJECT_CONFIGS:
+        if theme_folder_text == project_name or theme_folder_text.startswith(f"{project_name}_"):
+            return project_name
+
     for project_name, config in PROJECT_CONFIGS.items():
         for prefix in config.get("theme_prefixes", ()):
             if theme_folder_text.startswith(str(prefix).lower()):
                 return project_name
+
     return DEFAULT_PROJECT_CONFIG["project_name"]
 
 
