@@ -12,11 +12,18 @@ DEFAULT_PROJECT_CONFIG = {
 
 PROJECT_CONFIGS = {
     "app_car": {
-        "project_name": "app_car",
+        "project_name": "Áreas de Preservação Permanentes (APP) nos imóveis rurais",
         "theme_prefixes": ("app_car_",),
         "output_name_template": "pol_pcd_{theme_folder}_{date_yyyymmdd}",
         "reference_date": "20260301",
         "optional_function_module": "projects.functions.app_car",
+    },
+    "reserva_legal_car": {
+        "project_name": "Reserva Legal (RL) nos imóveis rurais",
+        "theme_prefixes": ("rl_car_",),
+        "output_name_template": "pol_pcd_{theme_folder}_{date_yyyymmdd}",
+        "reference_date": "20260301",
+        "optional_function_module": None,
     },
 }
 
