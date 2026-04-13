@@ -12,15 +12,25 @@ DEFAULT_PROJECT_CONFIG = {
 
 PROJECT_CONFIGS = {
     "app_car": {
-        "project_name": "Áreas de Preservação Permanentes (APP) nos imóveis rurais",
+        "project_name": "app_car",
+        "display_name": "Areas de Preservacao Permanentes (APP) nos imoveis rurais",
         "theme_prefixes": ("app_car_",),
         "output_name_template": "pol_pcd_{theme_folder}_{date_yyyymmdd}",
         "reference_date": "20260301",
         "optional_function_module": "projects.functions.app_car",
     },
+    "estado": {
+        "project_name": "estado",
+        "display_name": "Limites das unidades da federacao do Brasil",
+        "theme_prefixes": ("estado",),
+        "output_name_template": "pol_loc_{theme_folder}_{date_yyyymmdd}",
+        "reference_date": "20241215",
+        "optional_function_module": None,
+    },
     "reserva_legal_car": {
-        "project_name": "Reserva Legal (RL) nos imóveis rurais",
-        "theme_prefixes": ("rl_car_",),
+        "project_name": "reserva_legal_car",
+        "display_name": "Reserva Legal (RL) nos imoveis rurais",
+        "theme_prefixes": ("reserva_legal_car_",),
         "output_name_template": "pol_pcd_{theme_folder}_{date_yyyymmdd}",
         "reference_date": "20260301",
         "optional_function_module": None,
