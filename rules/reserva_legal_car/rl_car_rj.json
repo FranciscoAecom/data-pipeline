@@ -12,7 +12,7 @@
       "validate_shapefile_attribute"
     ],
     "sdb_des_condic": [
-      "car_app_transform_desc_condic"
+      "reserva_legal_car_transform_desc_condic"
     ]
   },
   "fields": {

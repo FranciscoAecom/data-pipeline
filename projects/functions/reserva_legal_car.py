@@ -5,7 +5,7 @@ from difflib import get_close_matches
 from core.utils import log
 
 
-def car_app_transform_desc_condic(gdf, column):
+def reserva_legal_car_transform_desc_condic(gdf, column):
     target_column = "acm_desc_condic"
 
     if column not in gdf.columns:
@@ -54,5 +54,5 @@ def car_app_transform_desc_condic(gdf, column):
 
 
 PROJECT_OPTIONAL_FUNCTIONS = {
-    "car_app_transform_desc_condic": car_app_transform_desc_condic,
+    "reserva_legal_car_transform_desc_condic": reserva_legal_car_transform_desc_condic,
 }
