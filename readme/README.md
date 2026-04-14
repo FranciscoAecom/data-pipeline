@@ -83,6 +83,13 @@ Convencoes:
 - colunas tratadas saem em `acm_*`
 - o arquivo final nao grava marcacoes tecnicas internas
 
+Fluxo de schema:
+
+1. durante a carga e preparo, os nomes de entrada sao normalizados para `sdb_*`
+2. validacoes e transformacoes genericas do `core` devem ler o atributo original em `sdb_*`
+3. qualquer normalizacao, derivacao ou padronizacao deve produzir uma coluna `acm_*`
+4. funcoes genericas nao devem sobrescrever `sdb_*`; o valor original da base deve ser preservado
+
 Geometria:
 
 - o pipeline achata geometrias para 2D antes dos calculos espaciais
@@ -99,6 +106,9 @@ Core:
 
 - `core/ingest_loader.py`: leitura da ingest e validacao estrutural
 - `core/dataset_io.py`: leitura e escrita geoespacial
+- `core/schema.py`: convencoes de colunas `sdb_*` e `acm_*`
+- `core/text.py`: parsing e normalizacao generica de texto
+- `core/date/`: tratamento generico de campos de data
 - `core/pipeline.py`: pipeline principal de transformacoes
 - `core/batch_processor.py`: processamento em lotes
 - `core/reporting.py`: relatorios auxiliares
@@ -115,7 +125,7 @@ Core:
 Projetos:
 
 - `projects/configs.py`: configuracao por projeto
-- `projects/functions/`: funcoes especificas por projeto
+- `projects/functions/`: funcoes especificas por regra de negocio; logica generica deve ficar em `core/`
 
 Dados:
 
@@ -131,10 +141,15 @@ Data_Pipeline/
   core/
     ingest_loader.py
     dataset_io.py
+    schema.py
+    text.py
     pipeline.py
     batch_processor.py
     reporting.py
     naming.py
+    date/
+      __init__.py
+      date.py
     optional_functions.py
     helper_unique_values.py
     utils.py
@@ -239,6 +254,8 @@ O relatorio de inconsistencias de dominio usa `core/helper_unique_values.py`.
 ## Observacoes
 
 - o fluxo continua aplicando `auto_functions` definidas no perfil
+- nomes tecnicos devem permanecer em ASCII:
+  caminhos de regras, nomes de projeto, nomes de perfil e chaves em `projects/configs.py`
 - se o perfil nao existir em `rules/`, a base nao e processada
 - a validacao estrutural acontece antes da normalizacao de atributos
 - se uma pasta tiver varios arquivos suportados, todos entram na fila

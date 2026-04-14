@@ -1,31 +1,22 @@
-import re
-import unicodedata
 from difflib import get_close_matches
 
+from core.schema import target_column_name
+from core.text import normalize_for_compare
 from core.utils import log
 
 
 def reserva_legal_car_transform_desc_condic(gdf, column):
-    target_column = "acm_desc_condic"
+    target_column = target_column_name(column)
 
     if column not in gdf.columns:
         log(f"Atributo {column} nao encontrado")
         return gdf
 
-    def normalize_text(value):
-        if not isinstance(value, str):
-            return value
-        text = value.strip()
-        text = unicodedata.normalize("NFKD", text)
-        text = "".join(ch for ch in text if ord(ch) < 128)
-        text = re.sub(r"\s+", " ", text)
-        return text.upper()
-
     def transform_value(value):
         if not isinstance(value, str):
             return value
 
-        normalized = normalize_text(value)
+        normalized = normalize_for_compare(value)
         if not normalized:
             return value.strip()
         if "CANCELADO" in normalized:

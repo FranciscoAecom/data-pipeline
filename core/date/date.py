@@ -1,5 +1,7 @@
 import pandas as pd
 
+from core.schema import target_column_name
+
 
 def parse_date_series(series):
     cleaned = series.copy()
@@ -35,14 +37,8 @@ def parse_date_series(series):
     return parsed.dt.normalize()
 
 
-def _target_column_name(column):
-    if str(column).startswith("sdb_"):
-        return f"acm_{str(column)[4:]}"
-    return f"acm_{column}"
-
-
 def validate_date_fields(gdf, column):
-    target_column = _target_column_name(column)
+    target_column = target_column_name(column)
     gdf[target_column] = parse_date_series(gdf[column])
     return gdf
 

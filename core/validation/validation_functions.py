@@ -5,6 +5,8 @@ from difflib import get_close_matches
 import geopandas as gpd
 import pandas as pd
 
+from core.date import parse_date_series
+from core.schema import target_column_name
 from core.validation.rule_engine import (
     build_field_mapping,
     classify_field_value,
@@ -206,7 +208,7 @@ def prepare_validate_shapefile_attribute_mappings(gdf, mapping):
 
 
 def validate_date_fields(gdf, column):
-    gdf[column] = pd.to_datetime(gdf[column], errors="coerce")
+    gdf[target_column_name(column)] = parse_date_series(gdf[column])
     return gdf
 
 
@@ -400,9 +402,7 @@ def log_validation_summary():
 
 
 def _target_column_name(column):
-    if column.startswith("sdb_"):
-        return f"acm_{column[4:]}"
-    return f"acm_{column}"
+    return target_column_name(column)
 
 
 def _build_classification_cache(column, source_series):
