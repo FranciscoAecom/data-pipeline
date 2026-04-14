@@ -35,10 +35,6 @@ def get_optional_functions(project_name=None):
     return functions
 
 
-def get_optional_function_names(project_name=None):
-    return list(get_optional_functions(project_name).keys())
-
-
 def apply_optional_functions(gdf, mapping, stats, project_name=None):
     optional_functions = get_optional_functions(project_name)
 

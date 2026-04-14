@@ -217,16 +217,6 @@ def build_field_mapping(column, values):
     return replacements, corrections, invalid_values
 
 
-def get_expected_value_by_relation(source_column, source_value, relation_key):
-    profile = get_active_rule_profile()
-    relation = profile.get("relations", {}).get(relation_key, {})
-    result = classify_field_value(source_column, source_value)
-    normalized_source = result["normalized_value"]
-    if result["status"] not in {"valid", "normalized"}:
-        return None
-    return relation.get(normalized_source)
-
-
 def invalidate_rule_profile_cache(profile_name=None):
     if profile_name is None:
         _RULE_CACHE.clear()
