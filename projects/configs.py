@@ -35,13 +35,14 @@ PROJECT_CONFIGS = {
         "reference_date": "20260301",
         "optional_function_module": "projects.functions.reserva_legal_car",
     },
-    "date": {
-        "project_name": "date",
-        "display_name": "Autorizacao para Supressao Vegetal",
+
+    "autorizacao_para_supressao_vegetal": {
+        "project_name": "autorizacao_para_supressao_vegetal",
+        "display_name": "Autorização para Supressão Vegetal",
         "theme_prefixes": ("auth_supn",),
         "output_name_template": "pol_env_{theme_folder}_{date_yyyymmdd}",
         "reference_date": "20250701",
-        "optional_function_module": "core.date",
+        "optional_function_module": "projects.functions.date",
     },
 }
 
