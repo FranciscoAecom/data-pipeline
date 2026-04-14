@@ -1,0 +1,69 @@
+{
+  "profile_name": "reserva_legal_car_se",
+  "description": "Regras de dominio para bases Reserva Legal do CAR SE.",
+  "auto_functions": {
+    "sdb_cod_tema": [
+      "validate_shapefile_attribute"
+    ],
+    "sdb_nom_tema": [
+      "validate_shapefile_attribute"
+    ],
+    "sdb_ind_status": [
+      "validate_shapefile_attribute"
+    ],
+    "sdb_des_condic": [
+      "car_app_transform_desc_condic"
+    ]
+  },
+  "fields": {
+    "sdb_cod_tema": {
+      "accepted_values": [
+        "ARL_APROVADA_NAO_AVERBADA",
+        "ARL_AVERBADA",
+        "ARL_PROPOSTA"
+      ],
+      "aliases": {}
+    },
+    "sdb_nom_tema": {
+      "accepted_values": [
+        "Reserva Legal Aprovada e nao Averbada",
+        "Reserva Legal Averbada",
+        "Reserva Legal Proposta"
+      ],
+      "aliases": {}
+    },
+    "sdb_ind_status": {
+      "accepted_values": [
+        "AT",
+        "CA",
+        "PE",
+        "SU"
+      ],
+      "aliases": {}
+    },
+    "sdb_des_condic": {
+      "accepted_values": [
+        "Aguardando analise",
+        "Aguardando analise, apos revisao ou atendimento da notificacao",
+        "Analisado, aguardando atendimento a notificacao",
+        "Analisado, aguardando regularizacao ambiental (Lei n 12.651/2012)",
+        "Analisado, em conformidade com a Lei n 12.651/2012",
+        "Analisado, em conformidade com a Lei n 12.651/2012, com ativos ambientais",
+        "Analisado, em regularizacao ambiental (Lei n 12.651/2012)",
+        "Cancelado por alteracao na base de municipios",
+        "Cancelado por decisao administrativa",
+        "Cancelado por decisao judicial",
+        "Cancelado por duplicidade",
+        "Cancelado por solicitacao do proprietario/possuidor",
+        "Em analise"
+      ]
+    }
+  },
+  "relations": {
+    "cod_tema_to_nom_tema": {
+      "ARL_APROVADA_NAO_AVERBADA": "Reserva Legal Aprovada e nao Averbada",
+      "ARL_AVERBADA": "Reserva Legal Averbada",
+      "ARL_PROPOSTA": "Reserva Legal Proposta"
+    }
+  }
+}
