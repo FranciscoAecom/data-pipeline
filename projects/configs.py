@@ -33,7 +33,7 @@ PROJECT_CONFIGS = {
         "theme_prefixes": ("rl_car_",),
         "output_name_template": "pol_pcd_{theme_folder}_{date_yyyymmdd}",
         "reference_date": "20260301",
-        "optional_function_module": None,
+        "optional_function_module": "projects.functions.reserva_legal_car",
     },
 }
 

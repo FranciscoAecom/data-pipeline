@@ -19,24 +19,14 @@ from settings import INTERACTIVE_ATTRIBUTE_REVIEW
 _VALIDATE_ATTRIBUTE_MAPPINGS = {}
 _VALIDATION_SUMMARY = {
     "fields": {},
-    "tema_consistency": {
-        "status_counts": Counter(),
-        "reason_counts": Counter(),
-        "autocorrected_counts": Counter(),
-        "unchecked_code_counts": Counter(),
-    },
+    "relations": {},
 }
 
 
 def reset_validate_attribute_mappings():
     _VALIDATE_ATTRIBUTE_MAPPINGS.clear()
     _VALIDATION_SUMMARY["fields"].clear()
-    _VALIDATION_SUMMARY["tema_consistency"] = {
-        "status_counts": Counter(),
-        "reason_counts": Counter(),
-        "autocorrected_counts": Counter(),
-        "unchecked_code_counts": Counter(),
-    }
+    _VALIDATION_SUMMARY["relations"].clear()
 
 
 def _normalize_for_compare(value):
@@ -239,62 +229,124 @@ def _register_domain_validation_summary(column, statuses, reasons):
     )
 
 
-def _register_tema_consistency_summary(gdf):
-    required_columns = {"acm_cod_tema", "acm_nom_tema"}
-    if not required_columns.issubset(gdf.columns):
-        return
+def _series_has_changes(source_series, candidate_series):
+    same_mask = source_series.eq(candidate_series)
+    same_mask = same_mask | (source_series.isna() & candidate_series.isna())
+    same_mask = same_mask.fillna(False)
+    return not bool(same_mask.all())
 
-    relation = get_active_rule_profile().get("relations", {}).get("cod_tema_to_nom_tema", {})
-    if not relation:
-        return
 
-    status_counts = _VALIDATION_SUMMARY["tema_consistency"]["status_counts"]
-    reason_counts = _VALIDATION_SUMMARY["tema_consistency"]["reason_counts"]
-    autocorrected_counts = _VALIDATION_SUMMARY["tema_consistency"]["autocorrected_counts"]
-    unchecked_code_counts = _VALIDATION_SUMMARY["tema_consistency"]["unchecked_code_counts"]
+def _apply_target_column_if_needed(gdf, target_column, source_series, candidate_series):
+    if _series_has_changes(source_series, candidate_series):
+        gdf[target_column] = candidate_series
+    elif target_column in gdf.columns:
+        gdf = gdf.drop(columns=[target_column])
+    return gdf
 
-    cod_series = gdf["acm_cod_tema"]
-    nom_series = gdf["acm_nom_tema"]
 
-    nom_cache = {
-        value: classify_field_value("sdb_nom_tema", value)["normalized_value"]
-        for value in nom_series.dropna().drop_duplicates().tolist()
-    }
-    null_normalized = (
-        classify_field_value("sdb_nom_tema", None)["normalized_value"]
-        if nom_series.isna().any()
-        else None
+def _get_effective_domain_series(gdf, column):
+    target_column = _target_column_name(column)
+    if target_column in gdf.columns:
+        return gdf[target_column]
+
+    if column not in gdf.columns:
+        return pd.Series(index=gdf.index, dtype="object")
+
+    if not has_field_rules(column):
+        return gdf[column]
+
+    classification_cache, null_result = _build_classification_cache(column, gdf[column])
+    return _series_from_cache(
+        gdf[column],
+        classification_cache,
+        null_result,
+        "normalized_value",
     )
 
-    normalized_nom_series = nom_series.map(nom_cache)
-    if null_normalized is not None:
-        normalized_nom_series = normalized_nom_series.where(nom_series.notna(), null_normalized)
 
-    expected_nom_series = cod_series.map(relation)
-    unchecked_mask = cod_series.isna() | expected_nom_series.isna()
-    consistent_mask = (~unchecked_mask) & (normalized_nom_series == expected_nom_series)
-    autocorrected_mask = (~unchecked_mask) & (~consistent_mask)
+def _resolve_relation_columns(gdf, relation_key):
+    if "_to_" not in relation_key:
+        return None, None
 
-    unchecked_count = int(unchecked_mask.sum())
-    consistent_count = int(consistent_mask.sum())
-    autocorrected_count = int(autocorrected_mask.sum())
+    source_token, target_token = relation_key.split("_to_", 1)
+    available_columns = set(gdf.columns)
 
-    if unchecked_count:
-        status_counts.update({"unchecked": unchecked_count})
-        reason_counts.update({"Codigo do tema fora do dominio configurado.": unchecked_count})
-        unchecked_values = cod_series.loc[unchecked_mask].fillna("<NULL>").astype(str)
-        unchecked_code_counts.update(unchecked_values.value_counts().to_dict())
+    def _resolve(token):
+        direct_name = f"sdb_{token}"
+        if direct_name in available_columns:
+            return direct_name
+        if token in available_columns:
+            return token
+        for field_name in available_columns:
+            if str(field_name).endswith(f"_{token}"):
+                return field_name
+        return None
 
-    if consistent_count:
-        status_counts.update({"consistent": consistent_count})
+    return _resolve(source_token), _resolve(target_token)
 
-    if autocorrected_count:
-        status_counts.update({"autocorrected": autocorrected_count})
-        autocorrected_counts.update(cod_series.loc[autocorrected_mask].value_counts().to_dict())
 
-    corrected_nom_series = nom_series.copy()
-    corrected_nom_series.loc[~unchecked_mask] = expected_nom_series.loc[~unchecked_mask]
-    gdf["acm_nom_tema"] = corrected_nom_series
+def _relation_summary_entry(relation_key):
+    return _VALIDATION_SUMMARY["relations"].setdefault(
+        relation_key,
+        {
+            "status_counts": Counter(),
+            "reason_counts": Counter(),
+            "autocorrected_counts": Counter(),
+            "unchecked_source_counts": Counter(),
+        },
+    )
+
+
+def _apply_relation_consistency_if_needed(gdf, column, normalized_series):
+    relations = get_active_rule_profile().get("relations", {})
+    if not relations:
+        return normalized_series
+
+    updated_series = normalized_series
+
+    for relation_key, relation_map in relations.items():
+        if not relation_map:
+            continue
+
+        source_column, target_column = _resolve_relation_columns(gdf, relation_key)
+        if target_column != column or not source_column:
+            continue
+        if source_column not in gdf.columns or target_column not in gdf.columns:
+            continue
+
+        summary = _relation_summary_entry(relation_key)
+        source_series = _get_effective_domain_series(gdf, source_column)
+        expected_target_series = source_series.map(relation_map)
+        unchecked_mask = source_series.isna() | expected_target_series.isna()
+        consistent_mask = (~unchecked_mask) & (updated_series == expected_target_series)
+        autocorrected_mask = (~unchecked_mask) & (~consistent_mask)
+
+        unchecked_count = int(unchecked_mask.sum())
+        consistent_count = int(consistent_mask.sum())
+        autocorrected_count = int(autocorrected_mask.sum())
+
+        if unchecked_count:
+            summary["status_counts"].update({"unchecked": unchecked_count})
+            summary["reason_counts"].update(
+                {f"Valor fonte fora do dominio configurado para {relation_key}.": unchecked_count}
+            )
+            unchecked_values = source_series.loc[unchecked_mask].fillna("<NULL>").astype(str)
+            summary["unchecked_source_counts"].update(unchecked_values.value_counts().to_dict())
+
+        if consistent_count:
+            summary["status_counts"].update({"consistent": consistent_count})
+
+        if autocorrected_count:
+            summary["status_counts"].update({"autocorrected": autocorrected_count})
+            summary["autocorrected_counts"].update(
+                source_series.loc[autocorrected_mask].value_counts().to_dict()
+            )
+
+        corrected_series = updated_series.copy()
+        corrected_series.loc[~unchecked_mask] = expected_target_series.loc[~unchecked_mask]
+        updated_series = corrected_series
+
+    return updated_series
 
 
 def log_validation_summary():
@@ -319,29 +371,30 @@ def log_validation_summary():
         for reason, count in entry["reason_counts"].most_common(5):
             log(f"  {count}x - {reason}")
 
-    consistency = _VALIDATION_SUMMARY["tema_consistency"]
-    autocorrected = consistency["status_counts"].get("autocorrected", 0)
-    inconsistent = consistency["status_counts"].get("inconsistent", 0)
-    unchecked = consistency["status_counts"].get("unchecked", 0)
-    if autocorrected or inconsistent or unchecked:
+    for relation_key, consistency in _VALIDATION_SUMMARY["relations"].items():
+        autocorrected = consistency["status_counts"].get("autocorrected", 0)
+        inconsistent = consistency["status_counts"].get("inconsistent", 0)
+        unchecked = consistency["status_counts"].get("unchecked", 0)
+        if not (autocorrected or inconsistent or unchecked):
+            continue
+
         parts = []
         if autocorrected:
-            parts.append(f"{autocorrected} autocorrigido(s) pela relacao cod_tema/nom_tema")
+            parts.append(f"{autocorrected} autocorrigido(s) pela relacao {relation_key}")
         if inconsistent:
             parts.append(f"{inconsistent} inconsistente(s)")
         if unchecked:
             parts.append(f"{unchecked} nao verificado(s)")
-        log(f"Resumo consistencia tema: {', '.join(parts)}")
-        for cod_tema, count in consistency["autocorrected_counts"].most_common(5):
-            expected_nom_tema = get_active_rule_profile().get("relations", {}).get(
-                "cod_tema_to_nom_tema",
-                {},
-            ).get(cod_tema)
-            if expected_nom_tema:
-                log(f"  {count}x - Descricao ajustada automaticamente para {cod_tema}: {expected_nom_tema}")
+        log(f"Resumo consistencia relacao {relation_key}: {', '.join(parts)}")
+
+        relation_map = get_active_rule_profile().get("relations", {}).get(relation_key, {})
+        for source_value, count in consistency["autocorrected_counts"].most_common(5):
+            expected_target = relation_map.get(source_value)
+            if expected_target:
+                log(f"  {count}x - Valor ajustado automaticamente para {source_value}: {expected_target}")
         if unchecked:
-            for cod_tema, count in consistency["unchecked_code_counts"].most_common(10):
-                log(f"  {count}x - Codigo do tema fora do dominio configurado: {cod_tema}")
+            for source_value, count in consistency["unchecked_source_counts"].most_common(10):
+                log(f"  {count}x - Valor fonte fora do dominio configurado: {source_value}")
         for reason, count in consistency["reason_counts"].most_common(5):
             log(f"  {count}x - {reason}")
 
@@ -378,14 +431,11 @@ def validate_shapefile_attribute(gdf, column):
     target_column = _target_column_name(column)
     source_series = gdf[column]
 
-    if target_column not in gdf.columns:
-        gdf[target_column] = source_series
-
     replacements = _VALIDATE_ATTRIBUTE_MAPPINGS.get(column, {})
 
     if has_field_rules(column):
         classification_cache, null_result = _build_classification_cache(column, source_series)
-        gdf[target_column] = _series_from_cache(
+        normalized_series = _series_from_cache(
             source_series,
             classification_cache,
             null_result,
@@ -395,14 +445,25 @@ def validate_shapefile_attribute(gdf, column):
         reasons = _series_from_cache(source_series, classification_cache, null_result, "reason")
 
         _register_domain_validation_summary(column, statuses.tolist(), reasons.tolist())
-        if column == "sdb_nom_tema":
-            _register_tema_consistency_summary(gdf)
+        normalized_series = _apply_relation_consistency_if_needed(gdf, column, normalized_series)
+        gdf = _apply_target_column_if_needed(
+            gdf,
+            target_column,
+            source_series,
+            normalized_series,
+        )
         return gdf
 
     if replacements:
         stripped_source = source_series.where(source_series.isna(), source_series.astype(str).str.strip())
         mapped_values = stripped_source.map(replacements)
-        gdf[target_column] = mapped_values.where(mapped_values.notna(), stripped_source)
+        candidate_series = mapped_values.where(mapped_values.notna(), stripped_source)
+        gdf = _apply_target_column_if_needed(
+            gdf,
+            target_column,
+            source_series,
+            candidate_series,
+        )
 
     return gdf
 
