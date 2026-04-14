@@ -1,6 +1,6 @@
 {
-  "profile_name": "reserva_legal_car_ce",
-  "description": "Regras de dominio para bases Reserva Legal do CAR CE.",
+  "profile_name": "reserva_legal_car_pa",
+  "description": "Regras de dominio para bases Reserva Legal do CAR PA.",
   "auto_functions": {
     "sdb_cod_tema": [
       "validate_shapefile_attribute"
@@ -50,6 +50,7 @@
         "Analisado, aguardando regularizacao ambiental (Lei n 12.651/2012)",
         "Analisado, em conformidade com a Lei n 12.651/2012",
         "Analisado, em conformidade com a Lei n 12.651/2012, com ativos ambientais",
+        "Analisado, em regularizacao ambiental (Lei n 12.651/2012)",
         "Cancelado por alteracao na base de municipios",
         "Cancelado por decisao administrativa",
         "Cancelado por decisao judicial",
