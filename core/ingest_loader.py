@@ -70,6 +70,32 @@ def _is_zip_path(path_value):
     return _stringify(path_value).lower().endswith(".zip")
 
 
+def _resolve_numbered_sibling_datasets(path, supported_suffixes):
+    if path.suffix.lower() not in supported_suffixes or not path.exists():
+        return []
+
+    match = re.match(r"^(?P<prefix>.+?)_(?P<index>\d+)$", path.stem, flags=re.IGNORECASE)
+    if not match:
+        return []
+
+    prefix = match.group("prefix")
+    sibling_pattern = re.compile(
+        rf"^{re.escape(prefix)}_(\d+){re.escape(path.suffix)}$",
+        flags=re.IGNORECASE,
+    )
+    sibling_files = sorted(
+        candidate for candidate in path.parent.iterdir()
+        if candidate.is_file()
+        and candidate.suffix.lower() in supported_suffixes
+        and sibling_pattern.match(candidate.name)
+    )
+
+    if len(sibling_files) <= 1:
+        return []
+
+    return [str(candidate) for candidate in sibling_files]
+
+
 def _resolve_input_dataset_paths(path_value):
     raw_path = _stringify(path_value)
     if not raw_path:
@@ -84,6 +110,9 @@ def _resolve_input_dataset_paths(path_value):
     if path.suffix.lower() in supported_suffixes:
         if not path.exists():
             raise FileNotFoundError(f"Arquivo de entrada nao encontrado: {path}")
+        sibling_dataset_paths = _resolve_numbered_sibling_datasets(path, supported_suffixes)
+        if sibling_dataset_paths:
+            return sibling_dataset_paths
         return [str(path)]
 
     if not path.exists():
