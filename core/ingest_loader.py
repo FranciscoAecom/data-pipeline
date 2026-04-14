@@ -5,7 +5,9 @@ import re
 
 import pandas as pd
 
+from projects.configs import resolve_project_name
 from core.validation.rule_engine import find_rule_profile_by_theme_folder
+from core.validation.rule_engine import get_rule_profile_project_name
 from settings import (
     DICTIONARIES_SHEET_NAME,
     INGEST_READY_STATUS,
@@ -260,6 +262,25 @@ def load_processing_queue(
                     status=status,
                     source_path=source_path,
                     reason="Nenhum arquivo de regra correspondente foi encontrado em rules/.",
+                )
+            )
+            continue
+
+        resolved_project_name = resolve_project_name(theme_folder)
+        rule_project_name = get_rule_profile_project_name(rule_profile)
+        if rule_project_name and rule_project_name != resolved_project_name:
+            issues.append(
+                IngestIssue(
+                    sheet_row=sheet_row,
+                    record_id=record_id,
+                    theme_folder=theme_folder,
+                    status=status,
+                    source_path=source_path,
+                    reason=(
+                        "Perfil de regras inconsistente com o projeto resolvido: "
+                        f"theme_folder={theme_folder} -> projeto {resolved_project_name}, "
+                        f"mas o perfil {rule_profile} declara project_name={rule_project_name}."
+                    ),
                 )
             )
             continue

@@ -1,24 +1,25 @@
 {
   "profile_name": "autorizacao_para_supressao_vegetal_auth_supn",
+  "project_name": "autorizacao_para_supressao_vegetal",
   "description": "Regras de dominio para bases de Autorizacao para Supressao Vegetal.",
   "auto_functions": {
     "sdb_descriptio": [
-      "validate_shapefile_attribute"
+      "core.validation.validation_functions.validate_shapefile_attribute"
     ],
     "sdb_transparen": [
-      "validate_shapefile_attribute"
+      "core.validation.validation_functions.validate_shapefile_attribute"
     ],
     "sdb_jurisdicti": [
-      "validate_shapefile_attribute"
+      "core.validation.validation_functions.validate_shapefile_attribute"
     ],
     "sdb_author_dat": [
-      "validate_date_fields"
+      "core.date.validate_date_fields"
     ],
     "sdb_expira_dat": [
-      "validate_date_fields"
+      "core.date.validate_date_fields"
     ],
     "sdb_dat_d_base": [
-      "validate_date_fields"
+      "core.date.validate_date_fields"
     ]
   },
   "fields": {

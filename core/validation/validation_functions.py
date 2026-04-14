@@ -104,9 +104,16 @@ def _build_validate_attribute_mapping(gdf, column):
     }
 
 
+def _has_optional_function(funcs, function_name):
+    return any(
+        str(func) == function_name or str(func).endswith(f".{function_name}")
+        for func in funcs
+    )
+
+
 def prepare_validate_shapefile_attribute_mappings(gdf, mapping):
     for column, funcs in mapping.items():
-        if "validate_shapefile_attribute" not in funcs:
+        if not _has_optional_function(funcs, "validate_shapefile_attribute"):
             continue
 
         if column not in gdf.columns:

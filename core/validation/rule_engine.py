@@ -123,6 +123,14 @@ def get_active_rule_profile():
     return _load_profile(_ACTIVE_RULE_PROFILE)
 
 
+def get_rule_profile_project_name(profile_name):
+    profile = _load_profile(profile_name)
+    project_name = profile.get("project_name")
+    if not isinstance(project_name, str):
+        return ""
+    return project_name.strip()
+
+
 def get_auto_function_mapping():
     profile = get_active_rule_profile()
     auto_functions = profile.get("auto_functions", {})

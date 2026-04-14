@@ -6,7 +6,6 @@ DEFAULT_PROJECT_CONFIG = {
     "theme_prefixes": (),
     "output_name_template": "{input_stem}_validado",
     "reference_date": None,
-    "optional_function_module": None,
 }
 
 
@@ -17,7 +16,6 @@ PROJECT_CONFIGS = {
         "theme_prefixes": ("app_car_",),
         "output_name_template": "pol_pcd_{theme_folder}_{date_yyyymmdd}",
         "reference_date": "20260301",
-        "optional_function_module": "projects.functions.app_car",
     },
     "estado": {
         "project_name": "estado",
@@ -25,7 +23,6 @@ PROJECT_CONFIGS = {
         "theme_prefixes": ("estado",),
         "output_name_template": "pol_loc_{theme_folder}_{date_yyyymmdd}",
         "reference_date": "20241215",
-        "optional_function_module": None,
     },
     "reserva_legal_car": {
         "project_name": "reserva_legal_car",
@@ -33,16 +30,13 @@ PROJECT_CONFIGS = {
         "theme_prefixes": ("rl_car_",),
         "output_name_template": "pol_pcd_{theme_folder}_{date_yyyymmdd}",
         "reference_date": "20260301",
-        "optional_function_module": "projects.functions.reserva_legal_car",
     },
-
     "autorizacao_para_supressao_vegetal": {
         "project_name": "autorizacao_para_supressao_vegetal",
-        "display_name": "Autorização para Supressão Vegetal",
+        "display_name": "Autorizacao para Supressao Vegetal",
         "theme_prefixes": ("auth_supn",),
         "output_name_template": "pol_env_{theme_folder}_{date_yyyymmdd}",
         "reference_date": "20250701",
-        "optional_function_module": "projects.functions.date",
     },
 }
 

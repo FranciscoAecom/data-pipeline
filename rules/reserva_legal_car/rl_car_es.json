@@ -1,18 +1,19 @@
 {
   "profile_name": "reserva_legal_car_es",
+  "project_name": "reserva_legal_car",
   "description": "Regras de dominio para bases Reserva Legal do CAR ES.",
   "auto_functions": {
     "sdb_cod_tema": [
-      "validate_shapefile_attribute"
+      "core.validation.validation_functions.validate_shapefile_attribute"
     ],
     "sdb_nom_tema": [
-      "validate_shapefile_attribute"
+      "core.validation.validation_functions.validate_shapefile_attribute"
     ],
     "sdb_ind_status": [
-      "validate_shapefile_attribute"
+      "core.validation.validation_functions.validate_shapefile_attribute"
     ],
     "sdb_des_condic": [
-      "reserva_legal_car_transform_desc_condic"
+      "projects.functions.reserva_legal_car.reserva_legal_car_transform_desc_condic"
     ]
   },
   "fields": {

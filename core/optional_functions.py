@@ -1,6 +1,5 @@
 from importlib import import_module
 
-from projects.configs import get_project_config
 from core.date import validate_date_fields
 from core.utils import log
 from core.validation.validation_functions import validate_shapefile_attribute
@@ -10,30 +9,31 @@ CORE_OPTIONAL_FUNCTIONS = {
     "validate_shapefile_attribute": validate_shapefile_attribute,
 }
 
-
-_PROJECT_FUNCTION_CACHE = {}
-
-
-def _load_project_optional_functions(project_name):
-    if project_name in _PROJECT_FUNCTION_CACHE:
-        return _PROJECT_FUNCTION_CACHE[project_name]
-
-    config = get_project_config(project_name)
-    module_name = config.get("optional_function_module")
-    if not module_name:
-        _PROJECT_FUNCTION_CACHE[project_name] = {}
-        return {}
-
-    module = import_module(module_name)
-    functions = getattr(module, "PROJECT_OPTIONAL_FUNCTIONS", {})
-    _PROJECT_FUNCTION_CACHE[project_name] = dict(functions)
-    return _PROJECT_FUNCTION_CACHE[project_name]
+_QUALIFIED_FUNCTION_CACHE = {}
 
 
 def get_optional_functions(project_name=None):
     functions = dict(CORE_OPTIONAL_FUNCTIONS)
-    functions.update(_load_project_optional_functions(project_name))
     return functions
+
+
+def _resolve_optional_function(func_name, optional_functions):
+    func = optional_functions.get(func_name)
+    if func:
+        return func
+
+    if "." not in str(func_name):
+        return None
+
+    if func_name in _QUALIFIED_FUNCTION_CACHE:
+        return _QUALIFIED_FUNCTION_CACHE[func_name]
+
+    module_name, function_name = str(func_name).rsplit(".", 1)
+    module = import_module(module_name)
+    func = getattr(module, function_name, None)
+    if func:
+        _QUALIFIED_FUNCTION_CACHE[func_name] = func
+    return func
 
 
 def apply_optional_functions(gdf, mapping, stats, project_name=None):
@@ -45,7 +45,7 @@ def apply_optional_functions(gdf, mapping, stats, project_name=None):
             continue
 
         for func_name in funcs:
-            func = optional_functions.get(func_name)
+            func = _resolve_optional_function(func_name, optional_functions)
             if not func:
                 if project_name and project_name != "default":
                     log(f"Funcao {func_name} nao registrada para o projeto {project_name}")

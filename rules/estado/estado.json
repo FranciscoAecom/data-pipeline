@@ -1,21 +1,22 @@
 {
   "profile_name": "estado",
+  "project_name": "estado",
   "description": "Regras de dominio para a base de estados do IBGE.",
   "auto_functions": {
     "sdb_nm_uf": [
-      "validate_shapefile_attribute"
+      "core.validation.validation_functions.validate_shapefile_attribute"
     ],
     "sdb_sigla_uf": [
-      "validate_shapefile_attribute"
+      "core.validation.validation_functions.validate_shapefile_attribute"
     ],
     "sdb_nm_regiao": [
-      "validate_shapefile_attribute"
+      "core.validation.validation_functions.validate_shapefile_attribute"
     ],
     "sdb_cd_uf": [
-      "validate_shapefile_attribute"
+      "core.validation.validation_functions.validate_shapefile_attribute"
     ],
     "sdb_cd_regiao": [
-      "validate_shapefile_attribute"
+      "core.validation.validation_functions.validate_shapefile_attribute"
     ]
   },
   "fields": {
@@ -49,9 +50,7 @@
         "Sergipe",
         "Tocantins"
       ],
-      "aliases": {
-
-      }
+      "aliases": {}
     },
     "sdb_sigla_uf": {
       "accepted_values": [
@@ -92,9 +91,7 @@
         "Sudeste",
         "Sul"
       ],
-      "aliases": {
-
-      }
+      "aliases": {}
     },
     "sdb_cd_uf": {
       "accepted_values": [
