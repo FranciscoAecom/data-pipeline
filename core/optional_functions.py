@@ -1,8 +1,9 @@
 from importlib import import_module
 
 from projects.configs import get_project_config
+from core.date import validate_date_fields
 from core.utils import log
-from core.validation.validation_functions import validate_date_fields, validate_shapefile_attribute
+from core.validation.validation_functions import validate_shapefile_attribute
 
 CORE_OPTIONAL_FUNCTIONS = {
     "validate_date_fields": validate_date_fields,
