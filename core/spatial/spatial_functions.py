@@ -59,6 +59,155 @@ def _is_wgs84_crs(crs):
         return False
 
 
+def _is_geographic_crs(crs):
+    if crs is None:
+        return False
+
+    try:
+        normalized_crs = CRS.from_user_input(crs)
+    except Exception:
+        return False
+
+    try:
+        return bool(normalized_crs.is_geographic)
+    except Exception:
+        return False
+
+
+def _is_within_geographic_bounds(bounds):
+    if bounds is None or len(bounds) != 4:
+        return False
+
+    minx, miny, maxx, maxy = bounds
+    values = (minx, miny, maxx, maxy)
+    if not all(value is not None and math.isfinite(value) for value in values):
+        return False
+
+    return (
+        -180.0 <= minx <= 180.0
+        and -180.0 <= maxx <= 180.0
+        and -90.0 <= miny <= 90.0
+        and -90.0 <= maxy <= 90.0
+    )
+
+
+def _validate_coordinate_ranges_for_crs(geom, crs, result, label=None):
+    if geom is None:
+        return
+
+    try:
+        if geom.is_empty:
+            return
+    except Exception:
+        return
+
+    current_label = label or geom.geom_type
+
+    if isinstance(geom, MultiPoint):
+        for index, item in enumerate(geom.geoms, 1):
+            _validate_coordinate_ranges_for_crs(
+                item,
+                crs,
+                result,
+                label=f"MultiPoint[{index}]",
+            )
+        return
+
+    if isinstance(geom, MultiLineString):
+        for index, item in enumerate(geom.geoms, 1):
+            _validate_coordinate_ranges_for_crs(
+                item,
+                crs,
+                result,
+                label=f"MultiLineString[{index}]",
+            )
+        return
+
+    if isinstance(geom, MultiPolygon):
+        for index, item in enumerate(geom.geoms, 1):
+            _validate_coordinate_ranges_for_crs(
+                item,
+                crs,
+                result,
+                label=f"MultiPolygon[{index}]",
+            )
+        return
+
+    if isinstance(geom, GeometryCollection):
+        for index, item in enumerate(geom.geoms, 1):
+            _validate_coordinate_ranges_for_crs(
+                item,
+                crs,
+                result,
+                label=f"GeometryCollection[{index}]",
+            )
+        return
+
+    if not _is_geographic_crs(crs):
+        return
+
+    try:
+        bounds = geom.bounds
+    except Exception:
+        _add_error(
+            result,
+            f"{current_label}: nao foi possivel obter bounds para validar compatibilidade com o CRS {crs}.",
+        )
+        return
+
+    if _is_within_geographic_bounds(bounds):
+        return
+
+    minx, miny, maxx, maxy = bounds
+    _add_error(
+        result,
+        (
+            f"{current_label}: bounds incompativeis com o CRS geografico {crs} "
+            f"(minx={minx}, miny={miny}, maxx={maxx}, maxy={maxy})."
+        ),
+    )
+
+
+def _geometry_series_matches_crs_coordinate_range(geometry, crs):
+    if not _is_geographic_crs(crs):
+        return pd.Series(True, index=geometry.index)
+
+    base_mask = geometry.notna() & (~geometry.is_empty)
+    if not base_mask.any():
+        return pd.Series(True, index=geometry.index)
+
+    try:
+        bounds = geometry.bounds
+        compatible_mask = (
+            bounds.notna().all(axis=1)
+            & np.isfinite(bounds.to_numpy()).all(axis=1)
+            & bounds["minx"].between(-180.0, 180.0)
+            & bounds["maxx"].between(-180.0, 180.0)
+            & bounds["miny"].between(-90.0, 90.0)
+            & bounds["maxy"].between(-90.0, 90.0)
+        )
+        compatible_mask = pd.Series(compatible_mask, index=geometry.index)
+        compatible_mask.loc[~base_mask] = True
+        return compatible_mask
+    except Exception:
+        compatible_mask = pd.Series(True, index=geometry.index)
+        for idx, geom in geometry.items():
+            if geom is None:
+                continue
+            try:
+                if geom.is_empty:
+                    continue
+            except Exception:
+                compatible_mask.loc[idx] = False
+                continue
+
+            try:
+                compatible_mask.loc[idx] = _is_within_geographic_bounds(geom.bounds)
+            except Exception:
+                compatible_mask.loc[idx] = False
+        return compatible_mask
+
+
 def _transform_geometry_chunk(geometry_chunk, target_crs):
     if geometry_chunk.empty:
         return gpd.GeoSeries(geometry_chunk, crs=target_crs)
@@ -413,6 +562,10 @@ def _can_skip_detailed_ogc_check(gdf, crs_esperado=None, srid_esperado=None, nor
     if not geom_types.issubset(GEOMETRY_TYPES):
         return False
 
+    coordinate_range_mask = _geometry_series_matches_crs_coordinate_range(geometry, gdf.crs)
+    if not bool(coordinate_range_mask.all()):
+        return False
+
     return bool(geometry.is_valid.all())
 
 
@@ -575,7 +728,7 @@ def validar_tipo(geom):
     return result
 
 
-def validar_coordenadas(geom):
+def validar_coordenadas(geom, crs=None):
     result = _new_validation_result(geom)
 
     if geom is None:
@@ -588,6 +741,7 @@ def validar_coordenadas(geom):
 
     if isinstance(geom, Point):
         _validate_coordinate_tuple(geom.coords[0], "Point", result)
+        _validate_coordinate_ranges_for_crs(geom, crs, result)
         return result
 
     if isinstance(geom, (LineString, LinearRing)):
@@ -598,17 +752,19 @@ def validar_coordenadas(geom):
             minimum_points=4 if isinstance(geom, LinearRing) else 2,
             must_be_closed=isinstance(geom, LinearRing),
         )
+        _validate_coordinate_ranges_for_crs(geom, crs, result)
         return result
 
     if isinstance(geom, Polygon):
         _validate_polygon_coords(geom, "Polygon", result)
+        _validate_coordinate_ranges_for_crs(geom, crs, result)
         return result
 
     if isinstance(geom, MultiPoint):
         if len(geom.geoms) == 0:
             _add_error(result, "MultiPoint sem geometrias.")
         for index, item in enumerate(geom.geoms, 1):
-            child_result = validar_coordenadas(item)
+            child_result = validar_coordenadas(item, crs=crs)
             for error in child_result["erros"]:
                 _add_error(result, f"MultiPoint[{index}]: {error}")
         return result
@@ -617,7 +773,7 @@ def validar_coordenadas(geom):
         if len(geom.geoms) == 0:
             _add_error(result, "MultiLineString sem geometrias.")
         for index, item in enumerate(geom.geoms, 1):
-            child_result = validar_coordenadas(item)
+            child_result = validar_coordenadas(item, crs=crs)
             for error in child_result["erros"]:
                 _add_error(result, f"MultiLineString[{index}]: {error}")
         return result
@@ -626,7 +782,7 @@ def validar_coordenadas(geom):
         if len(geom.geoms) == 0:
             _add_error(result, "MultiPolygon sem geometrias.")
         for index, item in enumerate(geom.geoms, 1):
-            child_result = validar_coordenadas(item)
+            child_result = validar_coordenadas(item, crs=crs)
             for error in child_result["erros"]:
                 _add_error(result, f"MultiPolygon[{index}]: {error}")
         return result
@@ -635,7 +791,7 @@ def validar_coordenadas(geom):
         if len(geom.geoms) == 0:
             _add_error(result, "GeometryCollection sem geometrias.")
         for index, item in enumerate(geom.geoms, 1):
-            child_result = validar_coordenadas(item)
+            child_result = validar_coordenadas(item, crs=crs)
             for error in child_result["erros"]:
                 _add_error(result, f"GeometryCollection[{index}]: {error}")
         return result
@@ -764,7 +920,7 @@ def validar_geometria(geom, crs=None, srid_esperado=None, crs_esperado=None, nor
 
     validacoes = [
         validar_tipo(geometria_avaliada),
-        validar_coordenadas(geometria_avaliada),
+        validar_coordenadas(geometria_avaliada, crs=crs),
         validar_regras_topologicas(geometria_avaliada),
         validar_srid_ou_crs(
             geometria_avaliada,
