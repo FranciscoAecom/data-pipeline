@@ -1,31 +1,31 @@
-{
+﻿{
   "profile_name": "autorizacao_para_supressao_vegetal_auth_supn",
   "project_name": "autorizacao_para_supressao_vegetal",
   "description": "Regras de dominio para bases de Autorizacao para Supressao Vegetal.",
   "auto_functions": {
     "sdb_descriptio": [
-      "core.validation.validation_functions.validate_shapefile_attribute"
+      "validate_shapefile_attribute"
     ],
     "sdb_transparen": [
-      "core.validation.validation_functions.validate_shapefile_attribute"
+      "validate_shapefile_attribute"
     ],
     "sdb_jurisdicti": [
-      "core.validation.validation_functions.validate_shapefile_attribute"
+      "validate_shapefile_attribute"
     ],
     "sdb_author_dat": [
-      "core.date.validate_date_fields"
+      "validate_date_fields"
     ],
     "sdb_expira_dat": [
-      "core.date.validate_date_fields"
+      "validate_date_fields"
     ],
     "sdb_dat_d_base": [
-      "core.date.validate_date_fields"
+      "validate_date_fields"
     ]
   },
   "fields": {
     "sdb_descriptio": {
       "accepted_values": [
-        "Autorização de Supressão de Vegetação - ASV",
+        "AutorizaÃ§Ã£o de SupressÃ£o de VegetaÃ§Ã£o - ASV",
         "PMFS/POA",
         "Uso Alternativo do Solo"
       ],
@@ -46,3 +46,4 @@
   },
   "relations": {}
 }
+

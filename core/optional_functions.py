@@ -14,7 +14,27 @@ _QUALIFIED_FUNCTION_CACHE = {}
 
 def get_optional_functions(project_name=None):
     functions = dict(CORE_OPTIONAL_FUNCTIONS)
+    if not project_name or project_name == "default":
+        return functions
+
+    try:
+        project_module = import_module(f"projects.functions.{project_name}")
+    except ModuleNotFoundError:
+        return functions
+
+    project_functions = getattr(project_module, "PROJECT_OPTIONAL_FUNCTIONS", {})
+    if isinstance(project_functions, dict):
+        functions.update(project_functions)
     return functions
+
+
+def get_registered_optional_function_names(project_name=None):
+    return set(get_optional_functions(project_name).keys())
+
+
+def is_optional_function_registered(func_name, project_name=None):
+    optional_functions = get_optional_functions(project_name)
+    return _resolve_optional_function(func_name, optional_functions) is not None
 
 
 def _resolve_optional_function(func_name, optional_functions):

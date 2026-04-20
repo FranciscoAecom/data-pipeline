@@ -4,13 +4,13 @@
   "description": "Regras de dominio para bases APP do CAR RJ.",
   "auto_functions": {
     "sdb_cod_tema": [
-      "core.validation.validation_functions.validate_shapefile_attribute"
+      "validate_shapefile_attribute"
     ],
     "sdb_nom_tema": [
-      "core.validation.validation_functions.validate_shapefile_attribute"
+      "validate_shapefile_attribute"
     ],
     "sdb_des_condic": [
-      "projects.functions.app_car.car_app_transform_desc_condic"
+      "car_app_transform_desc_condic"
     ]
   },
   "fields": {
@@ -93,6 +93,7 @@
         "Area de Preservacao Permanente de Rios de 200 ate 600 metros",
         "Area de Preservacao Permanente de Rios de 50 ate 200 metros",
         "Area de Preservacao Permanente de Topos de Morro",
+        "Area de Preservacao Permanente de Veredas",
         "Area de Preservacao Permanente em area antropizada nao declarada como area consolidada",
         "Area de Preservacao Permanente em area consolidada",
         "Area de Preservacao Permanente em area de Vegetacao Nativa"
