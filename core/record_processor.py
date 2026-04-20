@@ -27,7 +27,7 @@ class ProcessRecordResult:
     final_gdf: gpd.GeoDataFrame | None
 
 
-def _autofix_rule_profile_if_needed(final_gdf, record, output_dir):
+def _autofix_rule_profile(final_gdf, record, output_dir):
     theme_output_dir = build_theme_output_dir(output_dir, record.theme_folder)
     os.makedirs(theme_output_dir, exist_ok=True)
     base_name = os.path.splitext(os.path.basename(record.input_path))[0]
@@ -44,9 +44,13 @@ def _autofix_rule_profile_if_needed(final_gdf, record, output_dir):
         )
     except Exception as exc:
         log(f"Erro ao tentar corrigir automaticamente o perfil de regras: {exc}")
-        return
+        return None
 
-    if not summary["changed"]:
+    return summary
+
+
+def _log_autofix_summary(summary):
+    if not summary or not summary["changed"]:
         return
 
     log("Inconsistencias de dominio detectadas. Perfil de regras atualizado automaticamente.")
@@ -132,7 +136,8 @@ def process_record(
     with timed_log_step("Complemento de metricas espaciais"):
         final_gdf = fill_missing_spatial_metrics(final_gdf)
     with timed_log_step("Ajuste automatico do perfil de regras"):
-        _autofix_rule_profile_if_needed(final_gdf, record, output_dir)
+        autofix_summary = _autofix_rule_profile(final_gdf, record, output_dir)
+    _log_autofix_summary(autofix_summary)
 
     try:
         with timed_log_step("Persistencia de saidas"):

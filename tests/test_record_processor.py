@@ -48,7 +48,8 @@ class RecordProcessorTests(unittest.TestCase):
         mock_reset_validate_attribute_mappings.assert_called_once()
 
     @patch("core.record_processor.save_outputs")
-    @patch("core.record_processor._autofix_rule_profile_if_needed")
+    @patch("core.record_processor._log_autofix_summary")
+    @patch("core.record_processor._autofix_rule_profile")
     @patch("core.record_processor.fill_missing_spatial_metrics")
     @patch("core.record_processor.repair_invalid_geometries")
     @patch("core.record_processor.assign_output_identifiers")
@@ -73,7 +74,8 @@ class RecordProcessorTests(unittest.TestCase):
         mock_assign_output_identifiers,
         mock_repair_invalid_geometries,
         mock_fill_missing_spatial_metrics,
-        mock_autofix_rule_profile_if_needed,
+        mock_autofix_rule_profile,
+        mock_log_autofix_summary,
         mock_save_outputs,
     ):
         record = _record()
@@ -87,6 +89,7 @@ class RecordProcessorTests(unittest.TestCase):
         mock_assign_output_identifiers.return_value = final_gdf
         mock_repair_invalid_geometries.return_value = final_gdf
         mock_fill_missing_spatial_metrics.return_value = final_gdf
+        mock_autofix_rule_profile.return_value = {"changed": False}
         mock_save_outputs.return_value = "tests/_tmp_output/saida.gpkg"
 
         result = process_record(
@@ -118,13 +121,14 @@ class RecordProcessorTests(unittest.TestCase):
         self.assertTrue(mock_repair_invalid_geometries.call_args.args[0].equals(final_gdf))
         self.assertTrue(mock_fill_missing_spatial_metrics.call_args.args[0].equals(final_gdf))
         self.assertTrue(
-            mock_autofix_rule_profile_if_needed.call_args.args[0].equals(final_gdf)
+            mock_autofix_rule_profile.call_args.args[0].equals(final_gdf)
         )
-        self.assertIs(mock_autofix_rule_profile_if_needed.call_args.args[1], record)
+        self.assertIs(mock_autofix_rule_profile.call_args.args[1], record)
         self.assertEqual(
-            mock_autofix_rule_profile_if_needed.call_args.args[2],
+            mock_autofix_rule_profile.call_args.args[2],
             "tests/_tmp_output",
         )
+        mock_log_autofix_summary.assert_called_once_with({"changed": False})
         self.assertTrue(mock_save_outputs.call_args.args[0].equals(final_gdf))
         self.assertIs(mock_save_outputs.call_args.args[1], record)
         self.assertEqual(mock_save_outputs.call_args.args[2], "tests/_tmp_output")

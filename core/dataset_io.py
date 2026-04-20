@@ -50,6 +50,8 @@ def _select_input_layer(path):
     first = layers[0]
     if isinstance(first, (list, tuple)):
         return first[0]
+    if hasattr(first, "__len__") and not isinstance(first, (str, bytes)):
+        return first[0]
     return str(first)
 
 
