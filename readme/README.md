@@ -120,11 +120,13 @@ Core:
 - `core/validation/rule_autofix.py`: autoajuste de dominio
 - `core/validation/validation_functions.py`: validacoes tabulares e consistencia entre campos
 - `core/helper_unique_values.py`: exportacao de valores unicos
+- `core/processing_service.py`: servico de orquestracao do processamento por arquivo
 - `core/utils.py`: log contextual
 
 Projetos:
 
 - `projects/configs.py`: configuracao por projeto
+- `projects/registry.py`: registro explicito das funcoes opcionais por projeto
 - `projects/functions/`: funcoes especificas por regra de negocio; logica generica deve ficar em `core/`
 
 Dados:
@@ -202,7 +204,7 @@ Exemplo de configuracao por projeto:
 
 - `output_name_template`
 - `reference_date`
-- `optional_function_module`
+- funcoes opcionais registradas em `projects/functions/`
 
 ## Como Usar
 

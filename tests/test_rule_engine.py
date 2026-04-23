@@ -1,5 +1,6 @@
 import unittest
 
+from projects.registry import get_project_optional_functions
 from core.validation.rule_engine import validate_rule_profile
 
 
@@ -25,7 +26,11 @@ class ValidateRuleProfileTests(unittest.TestCase):
             "relations": {},
         }
 
-        validate_rule_profile(profile, "reserva_legal_car/demo")
+        validate_rule_profile(
+            profile,
+            "reserva_legal_car/demo",
+            optional_functions=get_project_optional_functions("reserva_legal_car"),
+        )
 
     def test_rejects_unknown_optional_function(self):
         profile = {
@@ -44,7 +49,11 @@ class ValidateRuleProfileTests(unittest.TestCase):
         }
 
         with self.assertRaisesRegex(ValueError, "nao esta registrada"):
-            validate_rule_profile(profile, "app_car/demo")
+            validate_rule_profile(
+                profile,
+                "app_car/demo",
+                optional_functions=get_project_optional_functions("app_car"),
+            )
 
     def test_rejects_alias_target_outside_accepted_values(self):
         profile = {

@@ -5,7 +5,7 @@ from core.text import normalize_for_compare
 from core.utils import log
 
 
-def car_app_transform_desc_condic(gdf, column):
+def car_app_transform_desc_condic(gdf, column, **_context):
     target_column = target_column_name(column)
 
     if column not in gdf.columns:

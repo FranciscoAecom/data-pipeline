@@ -37,7 +37,7 @@ def parse_date_series(series):
     return parsed.dt.normalize()
 
 
-def validate_date_fields(gdf, column):
+def validate_date_fields(gdf, column, **_context):
     target_column = target_column_name(column)
     gdf[target_column] = parse_date_series(gdf[column])
     return gdf

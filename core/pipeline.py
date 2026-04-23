@@ -36,7 +36,14 @@ def _ensure_crs(gdf):
     return gdf
 
 
-def run_pipeline(gdf, mapping, id_start=1, project_name=None):
+def run_pipeline(
+    gdf,
+    mapping,
+    id_start=1,
+    project_name=None,
+    rule_profile=None,
+    optional_functions=None,
+):
     stats = {
         "optional_functions": [],
         "forced_to_2d": 0,
@@ -58,6 +65,13 @@ def run_pipeline(gdf, mapping, id_start=1, project_name=None):
     gdf = add_centroid_coordinates(gdf)
 
     if mapping:
-        gdf = apply_optional_functions(gdf, mapping, stats, project_name=project_name)
+        gdf = apply_optional_functions(
+            gdf,
+            mapping,
+            stats,
+            project_name=project_name,
+            optional_functions=optional_functions,
+            rule_profile=rule_profile,
+        )
 
     return _ensure_geodataframe(gdf), stats

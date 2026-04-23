@@ -10,7 +10,6 @@ from core.schema import target_column_name
 from core.validation.rule_engine import (
     build_field_mapping,
     classify_field_value,
-    get_active_rule_profile,
     has_field_rules,
 )
 from core.spatial.spatial_functions import check_attribute_geometric_duplicates
@@ -74,7 +73,7 @@ def _build_fuzzy_mapping(gdf, column):
     return replacements
 
 
-def _build_validate_attribute_mapping(gdf, column):
+def _build_validate_attribute_mapping(gdf, column, rule_profile):
     unique_values = _get_non_empty_unique_text_values(gdf[column])
 
     if not unique_values:
@@ -85,8 +84,12 @@ def _build_validate_attribute_mapping(gdf, column):
             "strategy": "empty",
         }
 
-    if has_field_rules(column):
-        replacements, corrections, invalid_values = build_field_mapping(column, unique_values)
+    if has_field_rules(rule_profile, column):
+        replacements, corrections, invalid_values = build_field_mapping(
+            rule_profile,
+            column,
+            unique_values,
+        )
         return {
             "replacements": replacements,
             "corrections": corrections,
@@ -111,7 +114,7 @@ def _has_optional_function(funcs, function_name):
     )
 
 
-def prepare_validate_shapefile_attribute_mappings(gdf, mapping):
+def prepare_validate_shapefile_attribute_mappings(gdf, mapping, rule_profile):
     for column, funcs in mapping.items():
         if not _has_optional_function(funcs, "validate_shapefile_attribute"):
             continue
@@ -123,7 +126,7 @@ def prepare_validate_shapefile_attribute_mappings(gdf, mapping):
         if column in _VALIDATE_ATTRIBUTE_MAPPINGS:
             continue
 
-        mapping_result = _build_validate_attribute_mapping(gdf, column)
+        mapping_result = _build_validate_attribute_mapping(gdf, column, rule_profile)
         replacements = mapping_result["replacements"]
         corrections = mapping_result["corrections"]
         strategy = mapping_result["strategy"]
@@ -214,7 +217,7 @@ def prepare_validate_shapefile_attribute_mappings(gdf, mapping):
         )
 
 
-def validate_date_fields(gdf, column):
+def validate_date_fields(gdf, column, **_context):
     gdf[target_column_name(column)] = parse_date_series(gdf[column])
     return gdf
 
@@ -253,7 +256,7 @@ def _apply_target_column_if_needed(gdf, target_column, source_series, candidate_
     return gdf
 
 
-def _get_effective_domain_series(gdf, column):
+def _get_effective_domain_series(gdf, column, rule_profile):
     target_column = _target_column_name(column)
     if target_column in gdf.columns:
         return gdf[target_column]
@@ -261,10 +264,14 @@ def _get_effective_domain_series(gdf, column):
     if column not in gdf.columns:
         return pd.Series(index=gdf.index, dtype="object")
 
-    if not has_field_rules(column):
+    if not has_field_rules(rule_profile, column):
         return gdf[column]
 
-    classification_cache, null_result = _build_classification_cache(column, gdf[column])
+    classification_cache, null_result = _build_classification_cache(
+        rule_profile,
+        column,
+        gdf[column],
+    )
     return _series_from_cache(
         gdf[column],
         classification_cache,
@@ -302,12 +309,13 @@ def _relation_summary_entry(relation_key):
             "reason_counts": Counter(),
             "autocorrected_counts": Counter(),
             "unchecked_source_counts": Counter(),
+            "relation_map": {},
         },
     )
 
 
-def _apply_relation_consistency_if_needed(gdf, column, normalized_series):
-    relations = get_active_rule_profile().get("relations", {})
+def _apply_relation_consistency_if_needed(gdf, column, normalized_series, rule_profile):
+    relations = rule_profile.get("relations", {})
     if not relations:
         return normalized_series
 
@@ -324,7 +332,8 @@ def _apply_relation_consistency_if_needed(gdf, column, normalized_series):
             continue
 
         summary = _relation_summary_entry(relation_key)
-        source_series = _get_effective_domain_series(gdf, source_column)
+        summary["relation_map"] = dict(relation_map)
+        source_series = _get_effective_domain_series(gdf, source_column, rule_profile)
         expected_target_series = source_series.map(relation_map)
         unchecked_mask = source_series.isna() | expected_target_series.isna()
         consistent_mask = (~unchecked_mask) & (updated_series == expected_target_series)
@@ -396,7 +405,7 @@ def log_validation_summary():
             parts.append(f"{unchecked} nao verificado(s)")
         log(f"Resumo consistencia relacao {relation_key}: {', '.join(parts)}")
 
-        relation_map = get_active_rule_profile().get("relations", {}).get(relation_key, {})
+        relation_map = consistency.get("relation_map", {})
         for source_value, count in consistency["autocorrected_counts"].most_common(5):
             expected_target = relation_map.get(source_value)
             if expected_target:
@@ -412,12 +421,16 @@ def _target_column_name(column):
     return target_column_name(column)
 
 
-def _build_classification_cache(column, source_series):
+def _build_classification_cache(rule_profile, column, source_series):
     cache = {
-        value: classify_field_value(column, value)
+        value: classify_field_value(rule_profile, column, value)
         for value in source_series.dropna().drop_duplicates().tolist()
     }
-    null_result = classify_field_value(column, None) if source_series.isna().any() else None
+    null_result = (
+        classify_field_value(rule_profile, column, None)
+        if source_series.isna().any()
+        else None
+    )
     return cache, null_result
 
 
@@ -430,7 +443,7 @@ def _series_from_cache(source_series, cache, null_result, property_name):
     return result
 
 
-def validate_shapefile_attribute(gdf, column):
+def validate_shapefile_attribute(gdf, column, rule_profile=None, **_context):
     if column not in gdf.columns:
         log(f"Atributo {column} nao encontrado")
         return gdf
@@ -440,8 +453,15 @@ def validate_shapefile_attribute(gdf, column):
 
     replacements = _VALIDATE_ATTRIBUTE_MAPPINGS.get(column, {})
 
-    if has_field_rules(column):
-        classification_cache, null_result = _build_classification_cache(column, source_series)
+    if rule_profile is None:
+        return gdf
+
+    if has_field_rules(rule_profile, column):
+        classification_cache, null_result = _build_classification_cache(
+            rule_profile,
+            column,
+            source_series,
+        )
         normalized_series = _series_from_cache(
             source_series,
             classification_cache,
@@ -452,7 +472,12 @@ def validate_shapefile_attribute(gdf, column):
         reasons = _series_from_cache(source_series, classification_cache, null_result, "reason")
 
         _register_domain_validation_summary(column, statuses.tolist(), reasons.tolist())
-        normalized_series = _apply_relation_consistency_if_needed(gdf, column, normalized_series)
+        normalized_series = _apply_relation_consistency_if_needed(
+            gdf,
+            column,
+            normalized_series,
+            rule_profile,
+        )
         gdf = _apply_target_column_if_needed(
             gdf,
             target_column,

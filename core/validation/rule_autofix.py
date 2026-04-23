@@ -6,11 +6,8 @@ import pandas as pd
 from core.helper_unique_values import export_unique_values_from_dataframe
 from core.validation.rule_engine import (
     classify_field_value,
-    get_active_rule_profile,
-    normalize_profile_name,
     normalize_rule_text,
     save_rule_profile,
-    set_active_rule_profile,
 )
 
 
@@ -24,8 +21,7 @@ def _normalize_text_value(value):
     return text or None
 
 
-def collect_invalid_domain_values(gdf):
-    profile = get_active_rule_profile()
+def collect_invalid_domain_values(profile, gdf):
     fields = profile.get("fields", {})
     invalid_by_column = {}
 
@@ -38,7 +34,7 @@ def collect_invalid_domain_values(gdf):
 
         for value, count in counts.items():
             normalized_value = _normalize_text_value(value)
-            result = classify_field_value(column, normalized_value)
+            result = classify_field_value(profile, column, normalized_value)
             if result["status"] == "invalid" and result["reason"] == INVALID_DOMAIN_REASON:
                 invalid_values[normalized_value] = int(count)
 
@@ -162,8 +158,8 @@ def _update_relations(profile, gdf):
                 continue
 
             target_value = targets[0]
-            source_result = classify_field_value(source_column, source_value)
-            target_result = classify_field_value(target_column, target_value)
+            source_result = classify_field_value(profile, source_column, source_value)
+            target_result = classify_field_value(profile, target_column, target_value)
             if source_result["status"] == "invalid" or target_result["status"] == "invalid":
                 continue
 
@@ -186,8 +182,13 @@ def _update_relations(profile, gdf):
     return summary
 
 
-def autofix_rule_profile_from_invalid_domains(profile_name, gdf, support_report_path=None):
-    invalid_by_column = collect_invalid_domain_values(gdf)
+def autofix_rule_profile_from_invalid_domains(
+    profile_name,
+    profile,
+    gdf,
+    support_report_path=None,
+):
+    invalid_by_column = collect_invalid_domain_values(profile, gdf)
     if not invalid_by_column:
         return {
             "changed": False,
@@ -203,16 +204,11 @@ def autofix_rule_profile_from_invalid_domains(profile_name, gdf, support_report_
     if support_report_path:
         report_path = str(export_unique_values_from_dataframe(gdf, support_report_path, columns=list(invalid_by_column.keys())))
 
-    profile = get_active_rule_profile()
     field_summary = _update_fields(profile, invalid_by_column)
 
     profile_path = save_rule_profile(profile_name, profile)
-    set_active_rule_profile(normalize_profile_name(profile_name))
-
-    profile = get_active_rule_profile()
     relation_summary = _update_relations(profile, gdf)
     profile_path = save_rule_profile(profile_name, profile)
-    set_active_rule_profile(normalize_profile_name(profile_name))
 
     changed = any(field_summary["accepted_values_added"].values()) or any(field_summary["aliases_added"].values()) or any(relation_summary.values())
 

@@ -35,7 +35,15 @@ def _finalize_stats(stats_total):
     }
 
 
-def process_in_batches(gdf, mapping, batch_size=BATCH_SIZE, id_start=1, project_name=None):
+def process_in_batches(
+    gdf,
+    mapping,
+    batch_size=BATCH_SIZE,
+    id_start=1,
+    project_name=None,
+    rule_profile=None,
+    optional_functions=None,
+):
     total = len(gdf)
     log(f"Iniciando processamento em batches ({total} registros)")
 
@@ -57,6 +65,8 @@ def process_in_batches(gdf, mapping, batch_size=BATCH_SIZE, id_start=1, project_
             mapping,
             id_start=id_start + start,
             project_name=project_name,
+            rule_profile=rule_profile,
+            optional_functions=optional_functions,
         )
 
         results.append(processed)

@@ -17,10 +17,10 @@ def merge_function_mapping(base_mapping, new_mapping):
     return merged
 
 
-def build_auto_mapping(columns):
+def build_auto_mapping(columns, rule_profile):
     auto_mapping = {
         column: funcs
-        for column, funcs in get_auto_function_mapping().items()
+        for column, funcs in get_auto_function_mapping(rule_profile).items()
         if column in columns
     }
     mapping = merge_function_mapping({}, auto_mapping)

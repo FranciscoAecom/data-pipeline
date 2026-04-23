@@ -4,11 +4,9 @@ import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
-from projects.configs import PROJECT_CONFIGS
 from settings import DEFAULT_RULE_PROFILE, RULES_BASE
 
 
-_ACTIVE_RULE_PROFILE = DEFAULT_RULE_PROFILE
 _RULE_CACHE = {}
 
 
@@ -83,14 +81,7 @@ def _validate_project_name_entry(profile, errors):
         errors.append("Campo 'project_name' deve ser uma string nao vazia.")
         return DEFAULT_RULE_PROFILE
 
-    normalized_project_name = project_name.strip()
-    valid_projects = set(PROJECT_CONFIGS.keys()) | {DEFAULT_RULE_PROFILE}
-    if normalized_project_name not in valid_projects:
-        valid_list = ", ".join(sorted(valid_projects))
-        errors.append(
-            f"Campo 'project_name' invalido: {normalized_project_name}. Valores aceitos: {valid_list}."
-        )
-    return normalized_project_name
+    return project_name.strip()
 
 
 def _validate_fields_entry(fields, errors):
@@ -188,9 +179,7 @@ def _validate_relations_entry(relations, fields, errors):
                 break
 
 
-def _validate_auto_functions_entry(auto_functions, fields, project_name, errors):
-    from core.optional_functions import is_optional_function_registered
-
+def _validate_auto_functions_entry(auto_functions, fields, errors, optional_functions=None):
     if auto_functions is None:
         return
     if not isinstance(auto_functions, dict):
@@ -216,9 +205,13 @@ def _validate_auto_functions_entry(auto_functions, fields, project_name, errors)
                 )
                 continue
 
-            if not is_optional_function_registered(func_name, project_name=project_name):
+            if (
+                optional_functions is not None
+                and func_name not in optional_functions
+                and _resolve_qualified_function(func_name) is None
+            ):
                 errors.append(
-                    f"Funcao '{func_name}' em 'auto_functions.{column}' nao esta registrada para o projeto '{project_name}'."
+                    f"Funcao '{func_name}' em 'auto_functions.{column}' nao esta registrada."
                 )
                 continue
 
@@ -232,7 +225,20 @@ def _validate_auto_functions_entry(auto_functions, fields, project_name, errors)
                 )
 
 
-def validate_rule_profile(profile, profile_name):
+def _resolve_qualified_function(func_name):
+    if "." not in str(func_name):
+        return None
+    try:
+        from importlib import import_module
+
+        module_name, function_name = str(func_name).rsplit(".", 1)
+        module = import_module(module_name)
+    except ModuleNotFoundError:
+        return None
+    return getattr(module, function_name, None)
+
+
+def validate_rule_profile(profile, profile_name, optional_functions=None):
     normalized_profile_name = normalize_profile_name(profile_name)
     if not isinstance(profile, dict):
         raise ValueError(
@@ -247,8 +253,8 @@ def validate_rule_profile(profile, profile_name):
     _validate_auto_functions_entry(
         profile.get("auto_functions", {}),
         fields,
-        project_name,
         errors,
+        optional_functions=optional_functions,
     )
 
     if errors:
@@ -300,19 +306,25 @@ def find_rule_profile_by_theme_folder(theme_folder):
     return None
 
 
-def set_active_rule_profile(profile_name):
-    global _ACTIVE_RULE_PROFILE
+def load_rule_profile(profile_name, optional_functions=None):
     normalized_profile_name = normalize_profile_name(profile_name)
-    _load_profile(normalized_profile_name)
-    _ACTIVE_RULE_PROFILE = normalized_profile_name
+    if optional_functions is None:
+        return _load_profile(normalized_profile_name)
 
+    path = _profile_path(normalized_profile_name)
+    if not path.exists():
+        raise FileNotFoundError(f"Perfil de regras nao encontrado: {path}")
 
-def get_active_rule_profile_name():
-    return _ACTIVE_RULE_PROFILE
+    with open(path, "r", encoding="utf-8-sig") as f:
+        profile = json.load(f)
 
-
-def get_active_rule_profile():
-    return _load_profile(_ACTIVE_RULE_PROFILE)
+    validate_rule_profile(
+        profile,
+        normalized_profile_name,
+        optional_functions=optional_functions,
+    )
+    _RULE_CACHE[normalized_profile_name] = profile
+    return profile
 
 
 def get_rule_profile_project_name(profile_name):
@@ -323,8 +335,7 @@ def get_rule_profile_project_name(profile_name):
     return project_name.strip()
 
 
-def get_auto_function_mapping():
-    profile = get_active_rule_profile()
+def get_auto_function_mapping(profile):
     auto_functions = profile.get("auto_functions", {})
     return {
         column: list(functions)
@@ -332,22 +343,21 @@ def get_auto_function_mapping():
     }
 
 
-def _get_field_entry(column):
-    profile = get_active_rule_profile()
+def _get_field_entry(profile, column):
     fields = profile.get("fields", {})
     return fields.get(column)
 
 
-def has_field_rules(column):
-    return _get_field_entry(column) is not None
+def has_field_rules(profile, column):
+    return _get_field_entry(profile, column) is not None
 
 
 def _build_normalized_lookup(values):
     return {normalize_rule_text(value): value for value in values}
 
 
-def classify_field_value(column, value):
-    field_rules = _get_field_entry(column)
+def classify_field_value(profile, column, value):
+    field_rules = _get_field_entry(profile, column)
 
     if field_rules is None:
         return {
@@ -401,13 +411,13 @@ def classify_field_value(column, value):
     }
 
 
-def build_field_mapping(column, values):
+def build_field_mapping(profile, column, values):
     replacements = {}
     corrections = []
     invalid_values = []
 
     for value in values:
-        result = classify_field_value(column, value)
+        result = classify_field_value(profile, column, value)
         replacements[value] = result["normalized_value"]
         if result["status"] == "normalized":
             corrections.append((value, result["normalized_value"]))
