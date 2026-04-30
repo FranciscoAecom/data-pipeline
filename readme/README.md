@@ -27,6 +27,17 @@ Exemplo:
 - `theme_folder = app_car_es`
 - perfil esperado: `rules/app_car/app_car_es.json`
 
+Associacao entre `theme_folder` e `rules`:
+
+- o projeto e inferido pelo prefixo do `theme_folder`
+- `app_car_*` usa `rules/app_car/`
+- `rl_car_*` usa `rules/reserva_legal_car/`
+- `estado` usa `rules/estado/`
+- `auth_supn` usa `rules/autorizacao_para_supressao_vegetal/`
+- se o perfil esperado nao existir, a linha nao e processada e o log informa o caminho esperado
+- se houver mais de uma rule com o mesmo nome final, o pipeline falha a associacao para evitar ambiguidade
+- quando informado dentro do JSON, o campo `theme_folder` precisa bater com o nome final do perfil
+
 O sistema normaliza a comparacao de nomes:
 
 - remove espacos excedentes
@@ -39,6 +50,8 @@ Se existirem valores com motivo `Valor fora do dominio configurado.`, o projeto 
 - novos `accepted_values`
 - `aliases`
 - `relations`
+
+Os perfis JSON em `rules/` devem ser mantidos em UTF-8. A suite de testes verifica se algum perfil contem sinais comuns de texto quebrado, como `Ã`, `Â` ou `�`, para evitar valores como `AutorizaÃ§Ã£o` em dominios aceitos.
 
 ## Dictionaries
 

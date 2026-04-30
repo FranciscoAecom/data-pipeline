@@ -1,4 +1,4 @@
-﻿{
+{
   "profile_name": "autorizacao_para_supressao_vegetal_auth_supn",
   "project_name": "autorizacao_para_supressao_vegetal",
   "description": "Regras de dominio para bases de Autorizacao para Supressao Vegetal.",
@@ -25,7 +25,7 @@
   "fields": {
     "sdb_descriptio": {
       "accepted_values": [
-        "AutorizaÃ§Ã£o de SupressÃ£o de VegetaÃ§Ã£o - ASV",
+        "Autorização de Supressão de Vegetação - ASV",
         "PMFS/POA",
         "Uso Alternativo do Solo"
       ],

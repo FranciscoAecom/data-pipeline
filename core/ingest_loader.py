@@ -6,6 +6,8 @@ import re
 import pandas as pd
 
 from projects.configs import resolve_project_name
+from core.validation.rule_engine import RuleProfileResolutionError
+from core.validation.rule_engine import expected_rule_profile_name
 from core.validation.rule_engine import find_rule_profile_by_theme_folder
 from core.validation.rule_engine import get_rule_profile_project_name
 from settings import (
@@ -252,7 +254,22 @@ def load_processing_queue(
             )
             continue
 
-        rule_profile = find_rule_profile_by_theme_folder(theme_folder)
+        expected_rule_profile = expected_rule_profile_name(theme_folder)
+        try:
+            rule_profile = find_rule_profile_by_theme_folder(theme_folder)
+        except RuleProfileResolutionError as exc:
+            issues.append(
+                IngestIssue(
+                    sheet_row=sheet_row,
+                    record_id=record_id,
+                    theme_folder=theme_folder,
+                    status=status,
+                    source_path=source_path,
+                    reason=str(exc),
+                )
+            )
+            continue
+
         if not rule_profile:
             issues.append(
                 IngestIssue(
@@ -261,7 +278,10 @@ def load_processing_queue(
                     theme_folder=theme_folder,
                     status=status,
                     source_path=source_path,
-                    reason="Nenhum arquivo de regra correspondente foi encontrado em rules/.",
+                    reason=(
+                        "Nenhum arquivo de regra correspondente foi encontrado em rules/. "
+                        f"Perfil esperado: rules/{expected_rule_profile}.json."
+                    ),
                 )
             )
             continue

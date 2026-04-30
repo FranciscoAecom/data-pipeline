@@ -4,10 +4,15 @@ import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
+from projects.configs import resolve_project_name
 from settings import DEFAULT_RULE_PROFILE, RULES_BASE
 
 
 _RULE_CACHE = {}
+
+
+class RuleProfileResolutionError(ValueError):
+    pass
 
 
 def normalize_rule_text(value):
@@ -73,6 +78,22 @@ def _validate_profile_name_entry(profile, normalized_profile_name, errors):
 
     if not isinstance(profile_name, str) or not profile_name.strip():
         errors.append("Campo 'profile_name' deve ser uma string nao vazia.")
+
+
+def _validate_theme_folder_entry(profile, normalized_profile_name, errors):
+    theme_folder = profile.get("theme_folder")
+    if theme_folder is None:
+        return
+
+    normalized_theme_folder = normalize_profile_name(theme_folder)
+    profile_stem = normalized_profile_name.rsplit("/", 1)[-1]
+
+    if not normalized_theme_folder:
+        errors.append("Campo 'theme_folder' deve ser uma string nao vazia.")
+    elif normalized_theme_folder != profile_stem:
+        errors.append(
+            f"Campo 'theme_folder' deve ser '{profile_stem}' quando informado."
+        )
 
 
 def _validate_project_name_entry(profile, errors):
@@ -247,6 +268,7 @@ def validate_rule_profile(profile, profile_name, optional_functions=None):
 
     errors = []
     _validate_profile_name_entry(profile, normalized_profile_name, errors)
+    _validate_theme_folder_entry(profile, normalized_profile_name, errors)
     project_name = _validate_project_name_entry(profile, errors)
     fields = _validate_fields_entry(profile.get("fields", {}), errors)
     _validate_relations_entry(profile.get("relations", {}), fields, errors)
@@ -275,12 +297,37 @@ def list_rule_profiles():
     )
 
 
+def expected_rule_profile_name(theme_folder):
+    normalized_theme_folder = normalize_profile_name(theme_folder)
+    if not normalized_theme_folder:
+        return None
+
+    project_name = resolve_project_name(normalized_theme_folder)
+    if project_name == DEFAULT_RULE_PROFILE:
+        return normalized_theme_folder
+    return f"{project_name}/{normalized_theme_folder}"
+
+
+def list_duplicate_rule_profile_stems():
+    profiles_by_stem = {}
+    for profile_name in list_rule_profiles():
+        profile_stem = normalize_profile_name(profile_name).rsplit("/", 1)[-1]
+        profiles_by_stem.setdefault(profile_stem, []).append(profile_name)
+
+    return {
+        profile_stem: profiles
+        for profile_stem, profiles in profiles_by_stem.items()
+        if len(profiles) > 1
+    }
+
+
 @lru_cache(maxsize=None)
 def find_rule_profile_by_theme_folder(theme_folder):
     normalized_theme_folder = normalize_profile_name(theme_folder)
     if not normalized_theme_folder:
         return None
 
+    expected_profile_name = expected_rule_profile_name(normalized_theme_folder)
     exact_matches = []
     stem_matches = []
 
@@ -296,11 +343,21 @@ def find_rule_profile_by_theme_folder(theme_folder):
     if exact_matches:
         return exact_matches[0]
 
+    if expected_profile_name in stem_matches:
+        return expected_profile_name
+
     if stem_matches:
         preferred_project = "_".join(normalized_theme_folder.split("_")[:-1])
         for profile_name in stem_matches:
             if preferred_project and profile_name.startswith(f"{preferred_project}/"):
                 return profile_name
+        if len(stem_matches) > 1:
+            matches = ", ".join(stem_matches)
+            raise RuleProfileResolutionError(
+                "Mais de um perfil de regras corresponde ao "
+                f"theme_folder '{theme_folder}': {matches}. "
+                f"Perfil esperado pelo projeto: {expected_profile_name}."
+            )
         return stem_matches[0]
 
     return None
