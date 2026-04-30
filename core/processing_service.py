@@ -11,6 +11,7 @@ from core.input_preparation import load_and_prepare_input, log_dataset_overview
 from core.naming import build_theme_output_dir
 from core.output_manager import assign_output_identifiers, save_outputs
 from core.rule_runtime import build_auto_mapping
+from core.spatial.regional_bounds import enforce_car_state_bounds
 from core.spatial.spatial_functions import fill_missing_spatial_metrics
 from core.utils import log, timed_log_step
 from core.validation.rule_autofix import autofix_rule_profile_from_invalid_domains
@@ -150,6 +151,9 @@ class ProcessingService:
             final_gdf = assign_output_identifiers(final_gdf, context.id_start)
         with timed_log_step("Reparo de geometrias invalidas"):
             final_gdf = repair_invalid_geometries(final_gdf)
+        if context.project_config["project_name"] in {"app_car", "reserva_legal_car"}:
+            with timed_log_step("Validacao de bbox regional CAR"):
+                final_gdf = enforce_car_state_bounds(final_gdf, context.record).gdf
         with timed_log_step("Complemento de metricas espaciais"):
             final_gdf = fill_missing_spatial_metrics(final_gdf)
         return final_gdf

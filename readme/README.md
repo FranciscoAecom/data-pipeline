@@ -95,6 +95,42 @@ Geometria:
 - o pipeline achata geometrias para 2D antes dos calculos espaciais
 - quando houver `Z` ou dimensoes superiores, apenas `X/Y` sao mantidos
 
+### BBox regional CAR
+
+Para bases dos projetos `app_car` e `reserva_legal_car`, o pipeline executa uma validacao adicional de bounding box por UF depois do reparo de geometrias invalidas e antes do complemento das metricas espaciais.
+
+Motivacao:
+
+- a validacao global de coordenadas verifica limites do mundo (`longitude -180..180`, `latitude -90..90`)
+- alguns erros podem passar por essa validacao global, por exemplo uma geometria de uma base do Maranhao com parte em latitude `83`
+- apesar de latitude `83` ser valida globalmente, ela e invalida para a UF esperada e distorce o bbox final do GeoPackage/GeoServer
+
+Comportamento:
+
+- a UF e inferida por `theme_folder`, `rule_profile`, `input_path`, `source_path` ou `theme`
+- por enquanto, a regra fica restrita aos projetos `app_car` e `reserva_legal_car`
+- o pipeline compara as geometrias com um envelope esperado para a UF
+- geometrias que extrapolam esse envelope sao recortadas para o bbox da UF
+- registros nao sao removidos
+- quando houver recorte, as metricas `acm_a_ha`, `acm_prm_km`, `acm_long` e `acm_lat` sao recalculadas para os registros alterados
+- se uma geometria estiver fora do envelope e nao intersectar a UF, ela nao e alterada; o caso e registrado em log
+
+Exemplo de log quando ocorre correcao:
+
+```text
+Validacao de bbox regional CAR
+BBox regional CAR: 1 geometria(s) recortada(s) para o envelope da UF MA.
+Validacao de bbox regional CAR concluido em 0.12s
+```
+
+Exemplo de log quando uma geometria fora do envelope nao intersecta a UF:
+
+```text
+BBox regional CAR: 1 geometria(s) fora do envelope da UF MA nao foram alteradas porque nao intersectam o estado.
+```
+
+O codigo dessa regra fica em `core/spatial/regional_bounds.py`.
+
 ## Estrutura
 
 Raiz:
@@ -116,6 +152,7 @@ Core:
 - `core/optional_functions.py`: funcoes opcionais genericas e integracao com projetos
 - `core/transforms/attribute_transforms.py`: transformacoes de schema e atributos
 - `core/spatial/spatial_functions.py`: operacoes espaciais e validacao OGC
+- `core/spatial/regional_bounds.py`: validacao e correcao de bbox regional para `app_car` e `reserva_legal_car`
 - `core/validation/rule_engine.py`: carregamento e persistencia de perfis
 - `core/validation/rule_autofix.py`: autoajuste de dominio
 - `core/validation/validation_functions.py`: validacoes tabulares e consistencia entre campos
@@ -240,6 +277,7 @@ O projeto registra:
 - validacao estrutural contra `dictionaries`
 - progresso por batch
 - tempo por etapa principal, como carga da base, processamento, reparo geometrico e persistencia
+- correcao de bbox regional CAR quando alguma geometria extrapola a UF esperada nos projetos habilitados
 - resumo final das validacoes
 - atualizacao automatica de perfil quando aplicavel
 - caminhos dos arquivos gerados
@@ -265,6 +303,7 @@ O relatorio de inconsistencias de dominio usa `core/helper_unique_values.py`.
 - se a entrada ja estiver em `EPSG:4326`, nao ha reprojecao
 - calculos e reprojecoes espaciais usam fatias menores para reduzir risco de estouro de memoria em bases grandes
 - geometrias invalidas sao reparadas antes da gravacao final; quando o reparo seguro nao for possivel, o log registra a ocorrencia
+- para `app_car` e `reserva_legal_car`, geometrias que extrapolam o bbox esperado da UF podem ser recortadas sem remocao de registros
 - o script `core/helper_unique_values.py` tambem pode ser usado manualmente
 - em Python 3.14, a leitura com Arrow e tentada primeiro; se o ambiente nao suportar, o projeto volta automaticamente para a leitura padrao do `pyogrio`
 - em ambientes nao interativos, deixe `INTERACTIVE_ATTRIBUTE_REVIEW = False` para evitar prompts durante a execucao do pipeline
