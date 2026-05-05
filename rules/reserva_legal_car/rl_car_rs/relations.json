@@ -1,0 +1,9 @@
+{
+  "relations": {
+    "cod_tema_to_nom_tema": {
+      "ARL_APROVADA_NAO_AVERBADA": "Reserva Legal Aprovada e nao Averbada",
+      "ARL_AVERBADA": "Reserva Legal Averbada",
+      "ARL_PROPOSTA": "Reserva Legal Proposta"
+    }
+  }
+}

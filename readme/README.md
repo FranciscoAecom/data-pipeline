@@ -25,7 +25,7 @@ O perfil de regra e obrigatorio.
 Exemplo:
 
 - `theme_folder = app_car_es`
-- perfil esperado: `rules/app_car/app_car_es.json`
+- perfil esperado: `rules/app_car/app_car_es/`
 
 Associacao entre `theme_folder` e `rules`:
 
@@ -51,7 +51,9 @@ Se existirem valores com motivo `Valor fora do dominio configurado.`, o projeto 
 - `aliases`
 - `relations`
 
-Os perfis JSON em `rules/` devem ser mantidos em UTF-8. A suite de testes verifica se algum perfil contem sinais comuns de texto quebrado, como `Ã`, `Â` ou `�`, para evitar valores como `AutorizaÃ§Ã£o` em dominios aceitos.
+Os perfis em `rules/` usam estrutura modular. Cada perfil fica em uma pasta com `profile.json`, `input_schema.json`, `domains.json`, `relations.json` e `pipeline.json`. Veja `readme/rules.md` para o formato completo e use `rules/_template/` como base para novos perfis.
+
+Os JSONs em `rules/` devem ser mantidos em UTF-8. A suite de testes verifica se algum perfil contem sinais comuns de texto quebrado, como `Ã`, `Â` ou `�`, para evitar valores como `AutorizaÃ§Ã£o` em dominios aceitos.
 
 ## Dictionaries
 
@@ -167,6 +169,7 @@ Core:
 - `core/spatial/spatial_functions.py`: operacoes espaciais e validacao OGC
 - `core/spatial/regional_bounds.py`: validacao e correcao de bbox regional para `app_car` e `reserva_legal_car`
 - `core/validation/rule_engine.py`: carregamento e persistencia de perfis
+- `core/validation/tabular_schema.py`: validacao de schema tabular de entrada
 - `core/validation/rule_autofix.py`: autoajuste de dominio
 - `core/validation/validation_functions.py`: validacoes tabulares e consistencia entre campos
 - `core/helper_unique_values.py`: exportacao de valores unicos
@@ -181,7 +184,7 @@ Projetos:
 
 Dados:
 
-- `rules/`: perfis JSON
+- `rules/`: perfis JSON modulares
 - `output/`: resultados por `theme_folder`
 
 Arvore resumida:
@@ -219,9 +222,12 @@ Data_Pipeline/
       app_car.py
   rules/
     app_car/
-      app_car_ac.json
-      app_car_mg.json
-      ...
+      app_car_ac/
+        profile.json
+        input_schema.json
+        domains.json
+        relations.json
+        pipeline.json
   output/
 ```
 

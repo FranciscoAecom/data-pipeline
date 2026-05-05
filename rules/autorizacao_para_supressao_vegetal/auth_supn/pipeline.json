@@ -1,0 +1,22 @@
+{
+  "auto_functions": {
+    "sdb_descriptio": [
+      "validate_shapefile_attribute"
+    ],
+    "sdb_transparen": [
+      "validate_shapefile_attribute"
+    ],
+    "sdb_jurisdicti": [
+      "validate_shapefile_attribute"
+    ],
+    "sdb_author_dat": [
+      "validate_date_fields"
+    ],
+    "sdb_expira_dat": [
+      "validate_date_fields"
+    ],
+    "sdb_dat_d_base": [
+      "validate_date_fields"
+    ]
+  }
+}

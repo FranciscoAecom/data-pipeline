@@ -1,0 +1,31 @@
+{
+  "columns": {
+    "sdb_nm_uf": {
+      "dtype": "string",
+      "required": true,
+      "nullable": true
+    },
+    "sdb_sigla_uf": {
+      "dtype": "string",
+      "required": true,
+      "nullable": true
+    },
+    "sdb_nm_regiao": {
+      "dtype": "string",
+      "required": true,
+      "nullable": true
+    },
+    "sdb_cd_uf": {
+      "dtype": "string",
+      "required": true,
+      "nullable": true
+    },
+    "sdb_cd_regiao": {
+      "dtype": "string",
+      "required": true,
+      "nullable": true
+    }
+  },
+  "require_geometry": true,
+  "allow_extra_columns": true
+}

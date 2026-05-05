@@ -1,0 +1,24 @@
+{
+  "fields": {
+    "sdb_descriptio": {
+      "accepted_values": [
+        "Autorizacao de Supressao de Vegetacao - ASV",
+        "PMFS/POA",
+        "Uso Alternativo do Solo"
+      ],
+      "aliases": {}
+    },
+    "sdb_transparen": {
+      "accepted_values": [
+        "Ativa"
+      ],
+      "aliases": {}
+    },
+    "sdb_jurisdicti": {
+      "accepted_values": [
+        "Federal"
+      ],
+      "aliases": {}
+    }
+  }
+}

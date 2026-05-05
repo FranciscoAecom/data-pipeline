@@ -1,0 +1,117 @@
+{
+  "fields": {
+    "sdb_nm_uf": {
+      "accepted_values": [
+        "Acre",
+        "Alagoas",
+        "Amapá",
+        "Amazonas",
+        "Bahia",
+        "Ceará",
+        "Distrito Federal",
+        "Espírito Santo",
+        "Goiás",
+        "Maranhăo",
+        "Mato Grosso",
+        "Mato Grosso do Sul",
+        "Minas Gerais",
+        "Pará",
+        "Paraíba",
+        "Paraná",
+        "Pernambuco",
+        "Piauí",
+        "Rio de Janeiro",
+        "Rio Grande do Norte",
+        "Rio Grande do Sul",
+        "Rondônia",
+        "Roraima",
+        "Santa Catarina",
+        "Săo Paulo",
+        "Sergipe",
+        "Tocantins"
+      ],
+      "aliases": {}
+    },
+    "sdb_sigla_uf": {
+      "accepted_values": [
+        "AC",
+        "AL",
+        "AP",
+        "AM",
+        "BA",
+        "CE",
+        "DF",
+        "ES",
+        "GO",
+        "MA",
+        "MT",
+        "MS",
+        "MG",
+        "PA",
+        "PB",
+        "PR",
+        "PE",
+        "PI",
+        "RJ",
+        "RN",
+        "RS",
+        "RO",
+        "RR",
+        "SC",
+        "SP",
+        "SE",
+        "TO"
+      ]
+    },
+    "sdb_nm_regiao": {
+      "accepted_values": [
+        "Centro-oeste",
+        "Nordeste",
+        "Norte",
+        "Sudeste",
+        "Sul"
+      ],
+      "aliases": {}
+    },
+    "sdb_cd_uf": {
+      "accepted_values": [
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "31",
+        "32",
+        "33",
+        "35",
+        "41",
+        "42",
+        "43",
+        "50",
+        "51",
+        "52",
+        "53"
+      ]
+    },
+    "sdb_cd_regiao": {
+      "accepted_values": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ]
+    }
+  }
+}

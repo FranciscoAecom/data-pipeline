@@ -1,0 +1,16 @@
+{
+  "columns": {
+    "sdb_coluna_obrigatoria": {
+      "dtype": "string",
+      "required": true,
+      "nullable": false
+    },
+    "sdb_coluna_opcional": {
+      "dtype": "number",
+      "required": false,
+      "nullable": true
+    }
+  },
+  "require_geometry": true,
+  "allow_extra_columns": true
+}

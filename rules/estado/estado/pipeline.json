@@ -1,0 +1,19 @@
+{
+  "auto_functions": {
+    "sdb_nm_uf": [
+      "validate_shapefile_attribute"
+    ],
+    "sdb_sigla_uf": [
+      "validate_shapefile_attribute"
+    ],
+    "sdb_nm_regiao": [
+      "validate_shapefile_attribute"
+    ],
+    "sdb_cd_uf": [
+      "validate_shapefile_attribute"
+    ],
+    "sdb_cd_regiao": [
+      "validate_shapefile_attribute"
+    ]
+  }
+}

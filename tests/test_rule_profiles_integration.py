@@ -5,6 +5,7 @@ from core.validation.rule_engine import (
     expected_rule_profile_name,
     find_rule_profile_by_theme_folder,
     get_rule_profile_project_name,
+    load_rule_profile,
     list_duplicate_rule_profile_stems,
     list_rule_profiles,
     profile_exists,
@@ -32,6 +33,24 @@ class RuleProfilesIntegrationTests(unittest.TestCase):
         self.assertIn("estado/estado", profiles)
         self.assertIn("reserva_legal_car/rl_car_sp", profiles)
         self.assertIn("autorizacao_para_supressao_vegetal/auth_supn", profiles)
+
+    def test_modular_rule_profile_loads_as_consolidated_profile(self):
+        profiles = set(list_rule_profiles())
+
+        self.assertIn("reserva_legal_car/rl_car_ac", profiles)
+        self.assertNotIn("reserva_legal_car/rl_car_ac/profile", profiles)
+        self.assertNotIn("reserva_legal_car/rl_car_ac/domains", profiles)
+
+        profile = load_rule_profile("reserva_legal_car/rl_car_ac")
+
+        self.assertEqual(profile["profile_name"], "reserva_legal_car_ac")
+        self.assertIn("input_schema", profile)
+        self.assertIn("sdb_cod_tema", profile["fields"])
+        self.assertIn("cod_tema_to_nom_tema", profile["relations"])
+        self.assertEqual(
+            profile["auto_functions"]["sdb_cod_tema"],
+            ["validate_shapefile_attribute"],
+        )
 
     def test_theme_folder_resolves_to_expected_project_profile(self):
         cases = {

@@ -9,6 +9,13 @@ from settings import DEFAULT_RULE_PROFILE, RULES_BASE
 
 
 _RULE_CACHE = {}
+_PROFILE_COMPONENT_FILES = {
+    "profile.json",
+    "input_schema.json",
+    "domains.json",
+    "relations.json",
+    "pipeline.json",
+}
 
 
 class RuleProfileResolutionError(ValueError):
@@ -47,11 +54,186 @@ def _profile_path(profile_name):
     normalized_profile_name = normalize_profile_name(profile_name)
     if not normalized_profile_name:
         return Path(RULES_BASE)
+    legacy_path = _legacy_profile_path(normalized_profile_name)
+    if legacy_path.exists():
+        return legacy_path
+    return _modular_profile_path(normalized_profile_name)
+
+
+def _legacy_profile_path(profile_name):
+    normalized_profile_name = normalize_profile_name(profile_name)
+    if not normalized_profile_name:
+        return Path(RULES_BASE)
     return Path(RULES_BASE) / Path(f"{normalized_profile_name}.json")
 
 
+def _modular_profile_path(profile_name):
+    normalized_profile_name = normalize_profile_name(profile_name)
+    if not normalized_profile_name:
+        return Path(RULES_BASE)
+    return Path(RULES_BASE) / Path(normalized_profile_name)
+
+
 def profile_exists(profile_name):
-    return _profile_path(profile_name).exists()
+    path = _profile_path(profile_name)
+    if path.is_dir():
+        return (path / "profile.json").exists()
+    return path.exists()
+
+
+def _load_json_file(path):
+    with open(path, "r", encoding="utf-8-sig") as f:
+        return json.load(f)
+
+
+def _read_component(profile_dir, component_file):
+    path = profile_dir / component_file
+    if not path.exists():
+        return {}
+    data = _load_json_file(path)
+    if not isinstance(data, dict):
+        raise ValueError(f"Componente de perfil invalido: {path}")
+    return data
+
+
+def _validate_component_errors(component_name, errors):
+    if errors:
+        message = "\n".join(f"- {error}" for error in errors)
+        raise ValueError(f"Componente '{component_name}' invalido:\n{message}")
+
+
+def _validate_profile_component(profile, normalized_profile_name):
+    errors = []
+    if not profile:
+        errors.append("profile.json deve conter metadados do perfil.")
+    if "profile_name" not in profile:
+        errors.append("Campo 'profile_name' e obrigatorio em profile.json.")
+    if "theme_folder" not in profile:
+        errors.append("Campo 'theme_folder' e obrigatorio em profile.json.")
+    _validate_profile_name_entry(profile, normalized_profile_name, errors)
+    _validate_theme_folder_entry(profile, normalized_profile_name, errors)
+    _validate_project_name_entry(profile, errors)
+    _validate_component_errors("profile.json", errors)
+
+
+def _validate_input_schema_component(input_schema):
+    errors = []
+
+    if not input_schema:
+        return
+
+    columns = input_schema.get("columns", {})
+    if not isinstance(columns, dict):
+        errors.append("Campo 'columns' deve ser um objeto JSON.")
+        columns = {}
+
+    for column, rule in columns.items():
+        if not isinstance(column, str) or not column.strip():
+            errors.append("Chaves de 'columns' devem ser strings nao vazias.")
+            continue
+
+        if isinstance(rule, str):
+            if not rule.strip():
+                errors.append(f"Tipo de '{column}' deve ser uma string nao vazia.")
+            continue
+
+        if not isinstance(rule, dict):
+            errors.append(f"Regra de coluna '{column}' deve ser string ou objeto JSON.")
+            continue
+
+        dtype = rule.get("dtype", "string")
+        if not isinstance(dtype, str) or not dtype.strip():
+            errors.append(f"'dtype' de '{column}' deve ser uma string nao vazia.")
+
+        for key in ("required", "nullable"):
+            value = rule.get(key, True)
+            if not isinstance(value, bool):
+                errors.append(f"'{key}' de '{column}' deve ser booleano.")
+
+    for key in ("require_geometry", "allow_extra_columns"):
+        value = input_schema.get(key, True)
+        if not isinstance(value, bool):
+            errors.append(f"Campo '{key}' deve ser booleano.")
+
+    _validate_component_errors("input_schema.json", errors)
+
+
+def _validate_domains_component(domains):
+    errors = []
+    fields = domains.get("fields", domains)
+    _validate_fields_entry(fields, errors)
+    _validate_component_errors("domains.json", errors)
+
+
+def _validate_relations_component(relations, fields):
+    errors = []
+    relation_entries = relations.get("relations", relations)
+    _validate_relations_entry(relation_entries, fields, errors)
+    _validate_component_errors("relations.json", errors)
+
+
+def _validate_pipeline_component(pipeline, fields):
+    errors = []
+    auto_functions = pipeline.get("auto_functions", pipeline)
+    _validate_auto_functions_entry(auto_functions, fields, errors)
+    _validate_component_errors("pipeline.json", errors)
+
+
+def _validate_modular_components(
+    profile,
+    input_schema,
+    domains,
+    relations,
+    pipeline,
+    normalized_profile_name,
+):
+    _validate_profile_component(profile, normalized_profile_name)
+    _validate_input_schema_component(input_schema)
+    _validate_domains_component(domains)
+
+    fields = domains.get("fields", domains)
+    _validate_relations_component(relations, fields)
+    _validate_pipeline_component(pipeline, fields)
+
+
+def _load_modular_profile(profile_dir):
+    if not profile_dir.is_dir():
+        raise FileNotFoundError(f"Perfil de regras nao encontrado: {profile_dir}")
+
+    profile_path = profile_dir / "profile.json"
+    if not profile_path.exists():
+        raise FileNotFoundError(f"Perfil modular sem profile.json: {profile_dir}")
+
+    profile = _read_component(profile_dir, "profile.json")
+    input_schema = _read_component(profile_dir, "input_schema.json")
+    domains = _read_component(profile_dir, "domains.json")
+    relations = _read_component(profile_dir, "relations.json")
+    pipeline = _read_component(profile_dir, "pipeline.json")
+    normalized_profile_name = str(profile_dir.relative_to(RULES_BASE)).replace("\\", "/")
+    _validate_modular_components(
+        profile,
+        input_schema,
+        domains,
+        relations,
+        pipeline,
+        normalized_profile_name,
+    )
+
+    if input_schema:
+        profile["input_schema"] = input_schema
+    profile["fields"] = domains.get("fields", domains)
+    profile["relations"] = relations.get("relations", relations)
+    profile["auto_functions"] = pipeline.get("auto_functions", pipeline)
+    return profile
+
+
+def _load_profile_data(profile_name):
+    path = _profile_path(profile_name)
+    if path.is_dir():
+        return _load_modular_profile(path)
+    if not path.exists():
+        raise FileNotFoundError(f"Perfil de regras nao encontrado: {path}")
+    return _load_json_file(path)
 
 
 def _load_profile(profile_name):
@@ -59,13 +241,7 @@ def _load_profile(profile_name):
     if normalized_profile_name in _RULE_CACHE:
         return _RULE_CACHE[normalized_profile_name]
 
-    path = _profile_path(normalized_profile_name)
-    if not path.exists():
-        raise FileNotFoundError(f"Perfil de regras nao encontrado: {path}")
-
-    with open(path, "r", encoding="utf-8-sig") as f:
-        profile = json.load(f)
-
+    profile = _load_profile_data(normalized_profile_name)
     validate_rule_profile(profile, normalized_profile_name)
     _RULE_CACHE[normalized_profile_name] = profile
     return profile
@@ -291,10 +467,27 @@ def list_rule_profiles():
     base_path = Path(RULES_BASE)
     if not base_path.exists():
         return []
-    return sorted(
-        str(path.relative_to(base_path).with_suffix("")).replace("\\", "/")
-        for path in base_path.rglob("*.json")
-    )
+    profiles = set()
+
+    for profile_dir in base_path.rglob("profile.json"):
+        relative_parent = profile_dir.parent.relative_to(base_path)
+        if _is_auxiliary_rule_path(relative_parent):
+            continue
+        profiles.add(str(relative_parent).replace("\\", "/"))
+
+    for path in base_path.rglob("*.json"):
+        relative_path = path.relative_to(base_path)
+        if _is_auxiliary_rule_path(relative_path):
+            continue
+        if path.name in _PROFILE_COMPONENT_FILES and (path.parent / "profile.json").exists():
+            continue
+        profiles.add(str(relative_path.with_suffix("")).replace("\\", "/"))
+
+    return sorted(profiles)
+
+
+def _is_auxiliary_rule_path(relative_path):
+    return any(str(part).startswith("_") for part in Path(relative_path).parts)
 
 
 def expected_rule_profile_name(theme_folder):
@@ -368,13 +561,7 @@ def load_rule_profile(profile_name, optional_functions=None):
     if optional_functions is None:
         return _load_profile(normalized_profile_name)
 
-    path = _profile_path(normalized_profile_name)
-    if not path.exists():
-        raise FileNotFoundError(f"Perfil de regras nao encontrado: {path}")
-
-    with open(path, "r", encoding="utf-8-sig") as f:
-        profile = json.load(f)
-
+    profile = _load_profile_data(normalized_profile_name)
     validate_rule_profile(
         profile,
         normalized_profile_name,
@@ -503,7 +690,7 @@ def save_rule_profile(profile_name, profile):
 
     validate_rule_profile(profile, normalized_profile_name)
 
-    path = _profile_path(normalized_profile_name)
+    path = _legacy_profile_path(normalized_profile_name)
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(profile, f, ensure_ascii=False, indent=2)

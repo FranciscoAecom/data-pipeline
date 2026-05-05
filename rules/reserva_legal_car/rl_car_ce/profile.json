@@ -1,0 +1,6 @@
+{
+  "profile_name": "reserva_legal_car_ce",
+  "project_name": "reserva_legal_car",
+  "description": "Regras de dominio para bases Reserva Legal do CAR CE.",
+  "theme_folder": "rl_car_ce"
+}

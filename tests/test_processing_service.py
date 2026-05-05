@@ -59,6 +59,49 @@ class ProcessingServiceTests(unittest.TestCase):
         mock_reset_validate_attribute_mappings.assert_called_once()
         mock_attach_rule_profile.assert_not_called()
 
+    @patch("core.processing_service.log_dataset_overview")
+    @patch("core.processing_service.reset_validate_attribute_mappings")
+    @patch.object(ProcessingService, "attach_rule_profile")
+    @patch.object(ProcessingService, "build_context")
+    @patch.object(ProcessingService, "load_input")
+    def test_returns_zero_when_tabular_schema_validation_fails(
+        self,
+        mock_load_input,
+        mock_build_context,
+        mock_attach_rule_profile,
+        mock_reset_validate_attribute_mappings,
+        mock_log_dataset_overview,
+    ):
+        record = _record()
+        context = SimpleNamespace(
+            project_config={"project_name": "reserva_legal_car"},
+            record=record,
+            output_dir="tests/_tmp_output",
+            rule_profile=None,
+            rule_profile_name=record.rule_profile,
+            optional_functions={},
+            id_start=1,
+        )
+        context_with_profile = SimpleNamespace(
+            **{
+                **context.__dict__,
+                "rule_profile": {
+                    "fields": {
+                        "sdb_cod_tema": {"accepted_values": ["ARL_AVERBADA"]},
+                    }
+                },
+            }
+        )
+        mock_build_context.return_value = context
+        mock_load_input.return_value = _gdf()
+        mock_attach_rule_profile.return_value = context_with_profile
+
+        result = ProcessingService().process(record, output_dir="tests/_tmp_output")
+
+        self.assertEqual(result, ProcessRecordResult(0, None, None))
+        mock_reset_validate_attribute_mappings.assert_called_once()
+        mock_log_dataset_overview.assert_not_called()
+
     @patch("core.processing_service.save_outputs")
     @patch.object(ProcessingService, "log_autofix_summary")
     @patch.object(ProcessingService, "autofix_rule_profile")

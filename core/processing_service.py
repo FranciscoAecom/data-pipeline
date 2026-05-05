@@ -16,6 +16,7 @@ from core.spatial.spatial_functions import fill_missing_spatial_metrics
 from core.utils import log, timed_log_step
 from core.validation.rule_autofix import autofix_rule_profile_from_invalid_domains
 from core.validation.rule_engine import load_rule_profile
+from core.validation.tabular_schema import get_tabular_schema, normalize_input_schema
 from core.validation.validation_functions import (
     prepare_validate_shapefile_attribute_mappings,
     reset_validate_attribute_mappings,
@@ -87,6 +88,13 @@ class ProcessingService:
             log(f"Erro ao carregar perfil de regras: {exc}")
             return ProcessRecordResult(0, None, None)
 
+        try:
+            with timed_log_step("Validacao de schema tabular"):
+                gdf = self.validate_tabular_schema(context, gdf)
+        except Exception as exc:
+            log(f"Erro na validacao de schema tabular: {exc}")
+            return ProcessRecordResult(0, None, None)
+
         log_dataset_overview(gdf)
 
         with timed_log_step("Preparacao do mapeamento de validacao"):
@@ -142,6 +150,20 @@ class ProcessingService:
             optional_functions=context.optional_functions,
         )
         return replace(context, rule_profile=rule_profile)
+
+    def validate_tabular_schema(self, context, gdf):
+        if get_tabular_schema(context.rule_profile) is None:
+            return gdf
+
+        gdf, errors = normalize_input_schema(context.record, gdf, context.rule_profile)
+        if errors:
+            message = "\n".join(f"- {error}" for error in errors)
+            raise ValueError(
+                f"Schema tabular invalido para {context.record.theme_folder}:\n{message}"
+            )
+
+        log(f"Validacao de schema tabular OK para {context.record.theme_folder}.")
+        return gdf
 
     def build_mapping(self, context, gdf):
         return build_auto_mapping(list(gdf.columns), context.rule_profile)

@@ -1,0 +1,8 @@
+{
+  "relations": {
+    "coluna_origem_to_coluna_destino": {
+      "VALOR_A": "Descricao do valor A",
+      "VALOR_B": "Descricao do valor B"
+    }
+  }
+}

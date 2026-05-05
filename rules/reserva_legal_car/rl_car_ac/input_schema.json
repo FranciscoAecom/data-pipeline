@@ -1,0 +1,26 @@
+{
+  "columns": {
+    "sdb_cod_tema": {
+      "dtype": "string",
+      "required": true,
+      "nullable": false
+    },
+    "sdb_nom_tema": {
+      "dtype": "string",
+      "required": true,
+      "nullable": false
+    },
+    "sdb_ind_status": {
+      "dtype": "string",
+      "required": true,
+      "nullable": false
+    },
+    "sdb_des_condic": {
+      "dtype": "string",
+      "required": true,
+      "nullable": true
+    }
+  },
+  "require_geometry": true,
+  "allow_extra_columns": true
+}

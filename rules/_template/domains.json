@@ -1,0 +1,13 @@
+{
+  "fields": {
+    "sdb_coluna_obrigatoria": {
+      "accepted_values": [
+        "VALOR_A",
+        "VALOR_B"
+      ],
+      "aliases": {
+        "valor a": "VALOR_A"
+      }
+    }
+  }
+}

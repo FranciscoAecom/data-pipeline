@@ -1,0 +1,36 @@
+{
+  "columns": {
+    "sdb_descriptio": {
+      "dtype": "string",
+      "required": true,
+      "nullable": false
+    },
+    "sdb_transparen": {
+      "dtype": "string",
+      "required": true,
+      "nullable": false
+    },
+    "sdb_jurisdicti": {
+      "dtype": "string",
+      "required": true,
+      "nullable": false
+    },
+    "sdb_author_dat": {
+      "dtype": "string",
+      "required": true,
+      "nullable": true
+    },
+    "sdb_expira_dat": {
+      "dtype": "string",
+      "required": true,
+      "nullable": true
+    },
+    "sdb_dat_d_base": {
+      "dtype": "string",
+      "required": true,
+      "nullable": true
+    }
+  },
+  "require_geometry": true,
+  "allow_extra_columns": true
+}

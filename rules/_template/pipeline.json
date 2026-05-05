@@ -1,0 +1,7 @@
+{
+  "auto_functions": {
+    "sdb_coluna_obrigatoria": [
+      "validate_shapefile_attribute"
+    ]
+  }
+}
