@@ -14,6 +14,21 @@
       "dtype": "string",
       "required": true,
       "nullable": true
+    },
+    "sdb_cod_imovel": {
+      "dtype": "string",
+      "required": true,
+      "nullable": true
+    },
+    "sdb_num_area": {
+      "dtype": "number",
+      "required": true,
+      "nullable": true
+    },
+    "sdb_desc_condic": {
+      "dtype": "string",
+      "required": true,
+      "nullable": true
     }
   },
   "require_geometry": true,
