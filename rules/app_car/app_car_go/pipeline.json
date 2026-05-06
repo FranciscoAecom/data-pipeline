@@ -6,7 +6,7 @@
     "sdb_nom_tema": [
       "validate_shapefile_attribute"
     ],
-    "sdb_des_condic": [
+    "sdb_desc_condic": [
       "car_app_transform_desc_condic"
     ]
   }

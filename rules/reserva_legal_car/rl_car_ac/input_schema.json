@@ -15,7 +15,7 @@
       "required": true,
       "nullable": false
     },
-    "sdb_des_condic": {
+    "sdb_desc_condic": {
       "dtype": "string",
       "required": true,
       "nullable": true

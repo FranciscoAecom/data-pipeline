@@ -168,8 +168,14 @@ Core:
 - `core/transforms/attribute_transforms.py`: transformacoes de schema e atributos
 - `core/spatial/spatial_functions.py`: operacoes espaciais e validacao OGC
 - `core/spatial/regional_bounds.py`: validacao e correcao de bbox regional para `app_car` e `reserva_legal_car`
-- `core/validation/rule_engine.py`: carregamento e persistencia de perfis
-- `core/validation/tabular_schema.py`: validacao de schema tabular de entrada
+- `core/validation/rule_engine.py`: fachada publica para regras e perfis
+- `core/validation/rule_loader.py`: carregamento, listagem e persistencia de perfis
+- `core/validation/rule_validation.py`: validacao estrutural dos perfis e componentes
+- `core/validation/domain_rules.py`: classificacao e mapeamento de valores de dominio
+- `core/validation/rule_normalization.py`: normalizacao de nomes e textos de regras
+- `core/validation/tabular_schema.py`: leitura do contrato tabular de entrada
+- `core/validation/tabular_validation.py`: validacao de colunas, tipos e geometria
+- `core/validation/tabular_coercion.py`: normalizacao/conversao de tipos antes da validacao
 - `core/validation/rule_autofix.py`: autoajuste de dominio
 - `core/validation/validation_functions.py`: validacoes tabulares e consistencia entre campos
 - `core/helper_unique_values.py`: exportacao de valores unicos

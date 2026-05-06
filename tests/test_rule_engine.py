@@ -8,6 +8,7 @@ from projects.registry import get_project_optional_functions
 from core.validation.rule_engine import (
     invalidate_rule_profile_cache,
     load_rule_profile,
+    save_rule_profile,
     validate_rule_profile,
 )
 
@@ -22,14 +23,14 @@ class ValidateRuleProfileTests(unittest.TestCase):
             "project_name": "reserva_legal_car",
             "auto_functions": {
                 "sdb_cod_tema": ["validate_shapefile_attribute"],
-                "sdb_des_condic": ["reserva_legal_car_transform_desc_condic"],
+                "sdb_desc_condic": ["reserva_legal_car_transform_desc_condic"],
             },
             "fields": {
                 "sdb_cod_tema": {
                     "accepted_values": ["A"],
                     "aliases": {"a": "A"},
                 },
-                "sdb_des_condic": {
+                "sdb_desc_condic": {
                     "accepted_values": ["Analizado"],
                     "aliases": {},
                 },
@@ -156,6 +157,34 @@ class ValidateRuleProfileTests(unittest.TestCase):
                 invalidate_rule_profile_cache()
                 with self.assertRaisesRegex(ValueError, "pipeline.json"):
                     load_rule_profile("demo/perfil")
+
+    def test_save_rule_profile_updates_modular_components(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            rules_base = Path(temp_dir) / "rules"
+            profile_dir = rules_base / "demo" / "perfil"
+            self._write_modular_profile(profile_dir)
+
+            with patch("core.validation.rule_engine.RULES_BASE", str(rules_base)):
+                invalidate_rule_profile_cache()
+                profile = load_rule_profile("demo/perfil")
+                profile["fields"]["sdb_codigo"]["accepted_values"].append("B")
+                profile["fields"]["sdb_nome"] = {
+                    "accepted_values": ["Alpha"],
+                    "aliases": {},
+                }
+                profile["relations"]["codigo_to_nome"] = {"A": "Alpha"}
+
+                saved_path = save_rule_profile("demo/perfil", profile)
+
+                self.assertEqual(Path(saved_path), profile_dir)
+                self.assertFalse((rules_base / "demo" / "perfil.json").exists())
+                domains = json.loads((profile_dir / "domains.json").read_text(encoding="utf-8"))
+                relations = json.loads((profile_dir / "relations.json").read_text(encoding="utf-8"))
+                self.assertIn("B", domains["fields"]["sdb_codigo"]["accepted_values"])
+                self.assertEqual(
+                    relations["relations"]["codigo_to_nome"],
+                    {"A": "Alpha"},
+                )
 
     def _write_modular_profile(
         self,

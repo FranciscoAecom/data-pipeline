@@ -205,8 +205,6 @@ def autofix_rule_profile_from_invalid_domains(
         report_path = str(export_unique_values_from_dataframe(gdf, support_report_path, columns=list(invalid_by_column.keys())))
 
     field_summary = _update_fields(profile, invalid_by_column)
-
-    profile_path = save_rule_profile(profile_name, profile)
     relation_summary = _update_relations(profile, gdf)
     profile_path = save_rule_profile(profile_name, profile)
 

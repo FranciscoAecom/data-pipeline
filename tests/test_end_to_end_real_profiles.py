@@ -87,7 +87,9 @@ class EndToEndRealProfilesTests(unittest.TestCase):
                     "sdb_cod_tema": ["ARL_AVERBADA"],
                     "sdb_nom_tema": ["Reserva Legal Averbada"],
                     "sdb_ind_status": ["AT"],
-                    "sdb_des_condic": ["Analisado sem pendencias"],
+                    "sdb_desc_condic": ["Analisado sem pendencias"],
+                    "sdb_cod_imovel": ["AC-000001"],
+                    "sdb_num_area": [10.5],
                     "geometry": [Point(1, 1)],
                 },
                 geometry="geometry",
@@ -113,13 +115,13 @@ class EndToEndRealProfilesTests(unittest.TestCase):
             self.assertIn("sdb_cod_tema", result.final_gdf.columns)
             self.assertIn("sdb_nom_tema", result.final_gdf.columns)
             self.assertIn("sdb_ind_status", result.final_gdf.columns)
-            self.assertIn("acm_des_condic", result.final_gdf.columns)
+            self.assertIn("acm_desc_condic", result.final_gdf.columns)
             self.assertEqual(result.final_gdf.loc[0, "sdb_cod_tema"], "ARL_AVERBADA")
             self.assertEqual(
                 result.final_gdf.loc[0, "sdb_nom_tema"],
                 "Reserva Legal Averbada",
             )
             self.assertEqual(result.final_gdf.loc[0, "sdb_ind_status"], "AT")
-            self.assertEqual(result.final_gdf.loc[0, "acm_des_condic"], "Analisado")
+            self.assertEqual(result.final_gdf.loc[0, "acm_desc_condic"], "Analisado")
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
