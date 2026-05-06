@@ -24,6 +24,11 @@
       "dtype": "string",
       "required": true,
       "nullable": true
+    },
+    "sdb_area_km2": {
+      "dtype": "number",
+      "required": true,
+      "nullable": true
     }
   },
   "require_geometry": true,
