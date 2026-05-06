@@ -165,6 +165,9 @@ Core:
 - `core/reporting.py`: relatorios auxiliares
 - `core/naming.py`: nomes de saida e caminhos por `theme_folder`
 - `core/optional_functions.py`: funcoes opcionais genericas e integracao com projetos
+- `core/pipeline_operations.py`: operacoes tipadas para funcoes opcionais do pipeline
+- `core/output_paths.py`: caminhos e nomes de saida
+- `core/output_quality.py`: relatorios e resumo de qualidade da saida
 - `core/transforms/attribute_transforms.py`: transformacoes de schema e atributos
 - `core/spatial/spatial_functions.py`: operacoes espaciais e validacao OGC
 - `core/spatial/regional_bounds.py`: validacao e correcao de bbox regional para `app_car` e `reserva_legal_car`

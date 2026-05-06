@@ -1,5 +1,6 @@
 from core.utils import log
 from core.date import validate_date_fields
+from core.pipeline_operations import build_pipeline_operation
 from core.validation.validation_functions import validate_shapefile_attribute
 
 _QUALIFIED_FUNCTION_CACHE = {}
@@ -45,6 +46,35 @@ def _resolve_optional_function(func_name, optional_functions):
     return func
 
 
+def resolve_pipeline_operation(func_name, optional_functions, source_column=None):
+    func = _resolve_optional_function(func_name, optional_functions)
+    if not func:
+        return None
+    return build_pipeline_operation(
+        func_name,
+        func,
+        source_column=source_column,
+    )
+
+
+def build_pipeline_operations(mapping, optional_functions=None, project_name=None):
+    optional_functions = optional_functions or get_optional_functions(project_name)
+    operations = {}
+    for column, funcs in mapping.items():
+        column_operations = []
+        for func_name in funcs:
+            operation = resolve_pipeline_operation(
+                func_name,
+                optional_functions,
+                source_column=column,
+            )
+            if operation:
+                column_operations.append(operation)
+        if column_operations:
+            operations[column] = column_operations
+    return operations
+
+
 def apply_optional_functions(
     gdf,
     mapping,
@@ -61,8 +91,12 @@ def apply_optional_functions(
             continue
 
         for func_name in funcs:
-            func = _resolve_optional_function(func_name, optional_functions)
-            if not func:
+            operation = resolve_pipeline_operation(
+                func_name,
+                optional_functions,
+                source_column=column,
+            )
+            if not operation:
                 if project_name and project_name != "default":
                     log(f"Funcao {func_name} nao registrada para o projeto {project_name}")
                 else:
@@ -70,8 +104,8 @@ def apply_optional_functions(
                 continue
 
             try:
-                gdf = func(gdf, column, **context)
-                stats["optional_functions"].append(func_name)
+                gdf = operation.execute(gdf, column, **context)
+                stats["optional_functions"].append(operation.name)
             except Exception as exc:
                 log(f"Erro em {func_name}: {exc}")
 
