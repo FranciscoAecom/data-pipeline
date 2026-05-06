@@ -102,6 +102,38 @@ def validate_modular_components(
     validate_pipeline_component(pipeline, fields)
 
 
+def validate_rule_profile_structure(profile, profile_name):
+    normalized_profile_name = normalize_profile_name(profile_name)
+    if not isinstance(profile, dict):
+        raise ValueError(
+            f"Perfil de regras invalido '{normalized_profile_name}': o conteudo deve ser um objeto JSON."
+        )
+
+    errors = []
+    _validate_profile_name_entry(profile, normalized_profile_name, errors)
+    _validate_theme_folder_entry(profile, normalized_profile_name, errors)
+    _validate_project_name_entry(profile, errors)
+    _validate_fields_entry(profile.get("fields", {}), errors)
+    _validate_input_schema_entry(profile.get("input_schema", {}), errors)
+    _validate_relations_shape(profile.get("relations", {}), errors)
+    _validate_auto_functions_shape(profile.get("auto_functions", {}), errors)
+    _raise_profile_errors(normalized_profile_name, errors)
+
+
+def validate_rule_profile_semantics(profile, profile_name, optional_functions=None):
+    normalized_profile_name = normalize_profile_name(profile_name)
+    errors = []
+    fields = profile.get("fields", {})
+    _validate_relations_entry(profile.get("relations", {}), fields, errors)
+    _validate_auto_functions_entry(
+        profile.get("auto_functions", {}),
+        fields,
+        errors,
+        optional_functions=optional_functions,
+    )
+    _raise_profile_errors(normalized_profile_name, errors)
+
+
 def _validate_profile_name_entry(profile, normalized_profile_name, errors):
     profile_name = profile.get("profile_name")
     if profile_name is None:
@@ -187,6 +219,58 @@ def _validate_fields_entry(fields, errors):
                 )
 
     return fields
+
+
+def _validate_input_schema_entry(input_schema, errors):
+    if not input_schema:
+        return
+    try:
+        validate_input_schema_component(input_schema)
+    except ValueError as exc:
+        errors.append(str(exc))
+
+
+def _validate_relations_shape(relations, errors):
+    if relations is None:
+        return
+    if not isinstance(relations, dict):
+        errors.append("Campo 'relations' deve ser um objeto JSON.")
+        return
+    for relation_name, relation_mapping in relations.items():
+        if not isinstance(relation_name, str) or not relation_name.strip():
+            errors.append("Chaves de 'relations' devem ser strings nao vazias.")
+            continue
+        if not isinstance(relation_mapping, dict):
+            errors.append(f"Relacao '{relation_name}' deve ser um objeto.")
+            continue
+        for source_value, target_value in relation_mapping.items():
+            if not isinstance(source_value, str) or not isinstance(target_value, str):
+                errors.append(
+                    f"Relacao '{relation_name}' deve conter apenas pares string -> string."
+                )
+                break
+
+
+def _validate_auto_functions_shape(auto_functions, errors):
+    if auto_functions is None:
+        return
+    if not isinstance(auto_functions, dict):
+        errors.append("Campo 'auto_functions' deve ser um objeto JSON.")
+        return
+    for column, functions in auto_functions.items():
+        if not isinstance(column, str) or not column.strip():
+            errors.append("Chaves de 'auto_functions' devem ser strings nao vazias.")
+            continue
+        if not isinstance(functions, list) or not functions:
+            errors.append(
+                f"'auto_functions.{column}' deve ser uma lista nao vazia de funcoes."
+            )
+            continue
+        for func_name in functions:
+            if not isinstance(func_name, str) or not func_name.strip():
+                errors.append(
+                    f"'auto_functions.{column}' deve conter apenas nomes de funcao string."
+                )
 
 
 def _validate_relations_entry(relations, fields, errors):
@@ -292,24 +376,15 @@ def _resolve_qualified_function(func_name):
 
 def validate_rule_profile(profile, profile_name, optional_functions=None):
     normalized_profile_name = normalize_profile_name(profile_name)
-    if not isinstance(profile, dict):
-        raise ValueError(
-            f"Perfil de regras invalido '{normalized_profile_name}': o conteudo deve ser um objeto JSON."
-        )
-
-    errors = []
-    _validate_profile_name_entry(profile, normalized_profile_name, errors)
-    _validate_theme_folder_entry(profile, normalized_profile_name, errors)
-    fields = _validate_fields_entry(profile.get("fields", {}), errors)
-    _validate_project_name_entry(profile, errors)
-    _validate_relations_entry(profile.get("relations", {}), fields, errors)
-    _validate_auto_functions_entry(
-        profile.get("auto_functions", {}),
-        fields,
-        errors,
+    validate_rule_profile_structure(profile, normalized_profile_name)
+    validate_rule_profile_semantics(
+        profile,
+        normalized_profile_name,
         optional_functions=optional_functions,
     )
 
+
+def _raise_profile_errors(normalized_profile_name, errors):
     if errors:
         message = "\n".join(f"- {error}" for error in errors)
         raise ValueError(

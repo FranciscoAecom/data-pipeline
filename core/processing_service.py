@@ -1,22 +1,23 @@
 import os
 from dataclasses import dataclass
-from dataclasses import replace
 
 import geopandas as gpd
 
-from core.batch_processor import process_in_batches
-from core.execution_context import ProcessingExecutionContext
-from core.geometry_repair import repair_invalid_geometries
-from core.input_preparation import load_and_prepare_input, log_dataset_overview
+from core.execution_context import ProcessingContext, replace_context
+from core.input_preparation import log_dataset_overview
 from core.naming import build_theme_output_dir
-from core.output_manager import assign_output_identifiers, save_outputs
+from core.output_writer import persist_outputs_step
+from core.processing_errors import log_processing_error
+from core.processing_steps import (
+    attach_rule_profile_step,
+    load_input_step,
+    postprocess_step,
+    run_pipeline_step,
+    validate_input_schema_step,
+)
 from core.rule_runtime import build_auto_mapping
-from core.spatial.regional_bounds import enforce_car_state_bounds
-from core.spatial.spatial_functions import fill_missing_spatial_metrics
 from core.utils import log, timed_log_step
 from core.validation.rule_autofix import autofix_rule_profile_from_invalid_domains
-from core.validation.rule_engine import load_rule_profile
-from core.validation.tabular_schema import get_tabular_schema, normalize_input_schema
 from core.validation.validation_functions import (
     prepare_validate_shapefile_attribute_mappings,
     reset_validate_attribute_mappings,
@@ -36,7 +37,7 @@ class ProcessingService:
     def build_context(self, record, output_dir, id_start=1):
         project_config = resolve_project_config(record.theme_folder)
         optional_functions = get_project_optional_functions(project_config["project_name"])
-        return ProcessingExecutionContext(
+        return ProcessingContext(
             record=record,
             output_dir=output_dir,
             project_config=project_config,
@@ -69,116 +70,96 @@ class ProcessingService:
         try:
             context = self.build_context(record, output_dir, id_start=id_start)
         except Exception as exc:
-            log(f"Erro ao resolver configuracao do projeto: {exc}")
+            log_processing_error("Erro ao resolver configuracao do projeto", exc)
             return ProcessRecordResult(0, None, None)
 
-        log(f"Projeto resolvido: {context.project_config['project_name']}")
+        log(f"Projeto resolvido: {self.project_name(context)}")
 
         try:
             with timed_log_step("Carga e preparo da base de entrada"):
-                gdf = self.load_input(context)
+                context = replace_context(context, gdf=self.load_input(context))
         except Exception as exc:
-            log(f"Erro ao carregar ou validar arquivo de entrada: {exc}")
+            log_processing_error("Erro ao carregar ou validar arquivo de entrada", exc)
             return ProcessRecordResult(0, None, None)
 
         try:
             with timed_log_step("Carregamento do perfil de regras"):
                 context = self.attach_rule_profile(context)
         except Exception as exc:
-            log(f"Erro ao carregar perfil de regras: {exc}")
+            log_processing_error("Erro ao carregar perfil de regras", exc)
             return ProcessRecordResult(0, None, None)
 
         try:
             with timed_log_step("Validacao de schema tabular"):
-                gdf = self.validate_tabular_schema(context, gdf)
+                context = replace_context(
+                    context,
+                    gdf=self.validate_tabular_schema(context, context.gdf),
+                )
         except Exception as exc:
-            log(f"Erro na validacao de schema tabular: {exc}")
+            log_processing_error("Erro na validacao de schema tabular", exc)
             return ProcessRecordResult(0, None, None)
 
-        log_dataset_overview(gdf)
+        log_dataset_overview(context.gdf)
 
         with timed_log_step("Preparacao do mapeamento de validacao"):
-            mapping = self.build_mapping(context, gdf)
+            context = replace_context(context, mapping=self.build_mapping(context, context.gdf))
             prepare_validate_shapefile_attribute_mappings(
-                gdf,
-                mapping,
+                context.gdf,
+                context.mapping,
                 context.rule_profile,
             )
 
         with timed_log_step("Processamento principal em batches"):
-            final_gdf, _ = process_in_batches(
-                gdf,
-                mapping,
-                id_start=context.id_start,
-                project_name=context.project_config["project_name"],
-                rule_profile=context.rule_profile,
-                optional_functions=context.optional_functions,
-            )
+            context = run_pipeline_step(context)
 
-        log(f"Resultado final: {len(final_gdf)} registros processados")
-
-        try:
-            final_gdf = gpd.GeoDataFrame(final_gdf, geometry="geometry", crs=final_gdf.crs)
-        except Exception as exc:
-            log(f"Erro ao garantir GeoDataFrame com geometria: {exc}")
-
-        final_gdf = self.postprocess(context, final_gdf)
-        autofix_summary = self.autofix_rule_profile(context, final_gdf)
+        context = replace_context(context, final_gdf=self.postprocess(context, context.final_gdf))
+        autofix_summary = self.autofix_rule_profile(context, context.final_gdf)
         self.log_autofix_summary(autofix_summary)
 
         try:
             with timed_log_step("Persistencia de saidas"):
-                output_path = save_outputs(
-                    final_gdf,
-                    context.record,
-                    context.output_dir,
+                context = self.persist_outputs(
+                    context,
                     use_configured_final_name=use_configured_final_name,
                     persist_dataset=persist_individual_output,
                 )
         except Exception as exc:
-            log(f"Erro ao salvar arquivo: {exc}")
+            log_processing_error("Erro ao salvar arquivo", exc)
             return ProcessRecordResult(0, None, None)
 
-        return ProcessRecordResult(len(final_gdf), output_path, final_gdf)
+        return ProcessRecordResult(len(context.final_gdf), context.output_path, context.final_gdf)
 
     def load_input(self, context):
-        return load_and_prepare_input(context.record)
+        return load_input_step(context).gdf
 
     def attach_rule_profile(self, context):
-        rule_profile = load_rule_profile(
-            context.rule_profile_name,
-            optional_functions=context.optional_functions,
-        )
-        return replace(context, rule_profile=rule_profile)
+        return attach_rule_profile_step(context)
 
     def validate_tabular_schema(self, context, gdf):
-        if get_tabular_schema(context.rule_profile) is None:
-            return gdf
-
-        gdf, errors = normalize_input_schema(context.record, gdf, context.rule_profile)
-        if errors:
-            message = "\n".join(f"- {error}" for error in errors)
-            raise ValueError(
-                f"Schema tabular invalido para {context.record.theme_folder}:\n{message}"
-            )
-
-        log(f"Validacao de schema tabular OK para {context.record.theme_folder}.")
-        return gdf
+        return validate_input_schema_step(replace_context(context, gdf=gdf)).gdf
 
     def build_mapping(self, context, gdf):
         return build_auto_mapping(list(gdf.columns), context.rule_profile)
 
+    def project_name(self, context):
+        if hasattr(context, "project_name"):
+            return context.project_name
+        return context.project_config["project_name"]
+
     def postprocess(self, context, final_gdf):
-        with timed_log_step("Atribuicao de identificadores finais"):
-            final_gdf = assign_output_identifiers(final_gdf, context.id_start)
-        with timed_log_step("Reparo de geometrias invalidas"):
-            final_gdf = repair_invalid_geometries(final_gdf)
-        if context.project_config["project_name"] in {"app_car", "reserva_legal_car"}:
-            with timed_log_step("Validacao de bbox regional CAR"):
-                final_gdf = enforce_car_state_bounds(final_gdf, context.record).gdf
-        with timed_log_step("Complemento de metricas espaciais"):
-            final_gdf = fill_missing_spatial_metrics(final_gdf)
-        return final_gdf
+        return postprocess_step(replace_context(context, final_gdf=final_gdf)).final_gdf
+
+    def persist_outputs(
+        self,
+        context,
+        use_configured_final_name=False,
+        persist_dataset=True,
+    ):
+        return persist_outputs_step(
+            context,
+            use_configured_final_name=use_configured_final_name,
+            persist_dataset=persist_dataset,
+        )
 
     def autofix_rule_profile(self, context, final_gdf):
         with timed_log_step("Ajuste automatico do perfil de regras"):

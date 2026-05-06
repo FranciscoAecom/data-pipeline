@@ -85,6 +85,7 @@ class ProcessingServiceTests(unittest.TestCase):
         context_with_profile = SimpleNamespace(
             **{
                 **context.__dict__,
+                "gdf": _gdf(),
                 "rule_profile": {
                     "fields": {
                         "sdb_cod_tema": {"accepted_values": ["ARL_AVERBADA"]},
@@ -102,11 +103,11 @@ class ProcessingServiceTests(unittest.TestCase):
         mock_reset_validate_attribute_mappings.assert_called_once()
         mock_log_dataset_overview.assert_not_called()
 
-    @patch("core.processing_service.save_outputs")
+    @patch("core.output_writer.save_outputs")
     @patch.object(ProcessingService, "log_autofix_summary")
     @patch.object(ProcessingService, "autofix_rule_profile")
     @patch.object(ProcessingService, "postprocess")
-    @patch("core.processing_service.process_in_batches")
+    @patch("core.processing_steps.process_in_batches")
     @patch("core.processing_service.prepare_validate_shapefile_attribute_mappings")
     @patch.object(ProcessingService, "build_mapping")
     @patch("core.processing_service.log_dataset_overview")
@@ -136,12 +137,18 @@ class ProcessingServiceTests(unittest.TestCase):
             project_config={"project_name": "reserva_legal_car"},
             record=record,
             output_dir="tests/_tmp_output",
+            gdf=source_gdf,
+            final_gdf=None,
+            mapping=None,
+            output_path=None,
             rule_profile={"fields": {}},
             rule_profile_name=record.rule_profile,
             optional_functions={"validate_shapefile_attribute": object()},
             id_start=5,
         )
-        context_with_profile = SimpleNamespace(**{**context.__dict__, "rule_profile": {"fields": {}}})
+        context_with_profile = SimpleNamespace(
+            **{**context.__dict__, "rule_profile": {"fields": {}}}
+        )
 
         mock_build_context.return_value = context
         mock_load_input.return_value = source_gdf

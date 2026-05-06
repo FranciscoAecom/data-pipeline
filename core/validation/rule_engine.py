@@ -11,7 +11,11 @@ from core.validation.rule_normalization import (
     normalize_profile_name,
     normalize_rule_text,
 )
-from core.validation.rule_validation import validate_rule_profile
+from core.validation.rule_validation import (
+    validate_rule_profile,
+    validate_rule_profile_semantics,
+    validate_rule_profile_structure,
+)
 
 
 def _sync_loader_settings():

@@ -169,8 +169,11 @@ Core:
 - `core/spatial/spatial_functions.py`: operacoes espaciais e validacao OGC
 - `core/spatial/regional_bounds.py`: validacao e correcao de bbox regional para `app_car` e `reserva_legal_car`
 - `core/validation/rule_engine.py`: fachada publica para regras e perfis
-- `core/validation/rule_loader.py`: carregamento, listagem e persistencia de perfis
-- `core/validation/rule_validation.py`: validacao estrutural dos perfis e componentes
+- `core/validation/rule_loader.py`: compatibilidade funcional sobre o repositorio de regras
+- `core/validation/rule_repository.py`: carregamento, listagem, cache e persistencia de perfis
+- `core/validation/rule_models.py`: modelos tipados internos dos perfis de regras
+- `core/validation/rule_constants.py`: nomes padronizados dos componentes de `rules`
+- `core/validation/rule_validation.py`: validacao estrutural e semantica dos perfis e componentes
 - `core/validation/domain_rules.py`: classificacao e mapeamento de valores de dominio
 - `core/validation/rule_normalization.py`: normalizacao de nomes e textos de regras
 - `core/validation/tabular_schema.py`: leitura do contrato tabular de entrada
@@ -180,6 +183,10 @@ Core:
 - `core/validation/validation_functions.py`: validacoes tabulares e consistencia entre campos
 - `core/helper_unique_values.py`: exportacao de valores unicos
 - `core/processing_service.py`: servico de orquestracao do processamento por arquivo
+- `core/execution_context.py`: contexto de processamento compartilhado entre etapas
+- `core/processing_steps.py`: etapas explicitas do fluxo de processamento
+- `core/processing_errors.py`: erro padronizado de processamento
+- `core/output_writer.py`: persistencia da saida final
 - `core/utils.py`: log contextual
 
 Projetos:
