@@ -6,10 +6,10 @@ import re
 import pandas as pd
 
 from projects.configs import resolve_project_name
-from core.validation.rule_engine import RuleProfileResolutionError
-from core.validation.rule_engine import expected_rule_profile_name
-from core.validation.rule_engine import find_rule_profile_by_theme_folder
-from core.validation.rule_engine import get_rule_profile_project_name
+from core.rules.engine import RuleProfileResolutionError
+from core.rules.engine import expected_rule_profile_name
+from core.rules.engine import find_rule_profile_by_theme_folder
+from core.rules.engine import get_rule_profile_project_name
 from settings import (
     DICTIONARIES_SHEET_NAME,
     INGEST_READY_STATUS,

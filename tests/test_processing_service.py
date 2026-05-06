@@ -103,7 +103,7 @@ class ProcessingServiceTests(unittest.TestCase):
         mock_reset_validate_attribute_mappings.assert_called_once()
         mock_log_dataset_overview.assert_not_called()
 
-    @patch("core.output_writer.save_outputs")
+    @patch("core.output.writer.save_outputs")
     @patch.object(ProcessingService, "log_autofix_summary")
     @patch.object(ProcessingService, "autofix_rule_profile")
     @patch.object(ProcessingService, "postprocess")

@@ -6,8 +6,9 @@ import geopandas as gpd
 from core.execution_context import ProcessingContext, replace_context
 from core.input_preparation import log_dataset_overview
 from core.naming import build_theme_output_dir
-from core.output_writer import persist_outputs_step
+from core.output.writer import persist_outputs_step
 from core.processing_errors import log_processing_error
+from core.processing_events import emit_processing_event
 from core.processing_steps import (
     attach_rule_profile_step,
     load_input_step,
@@ -17,7 +18,7 @@ from core.processing_steps import (
 )
 from core.rule_runtime import build_auto_mapping
 from core.utils import log, timed_log_step
-from core.validation.rule_autofix import autofix_rule_profile_from_invalid_domains
+from core.rules.autofix import autofix_rule_profile_from_invalid_domains
 from core.validation.validation_functions import (
     prepare_validate_shapefile_attribute_mappings,
     reset_validate_attribute_mappings,
@@ -55,15 +56,19 @@ class ProcessingService:
         use_configured_final_name=False,
         persist_individual_output=True,
     ):
-        log("")
-        log(
+        emit_processing_event("record.blank_line", "")
+        emit_processing_event(
+            "record.start",
             f"Processando linha {record.sheet_row} da ingest | "
-            f"ID={record.record_id} | theme_folder={record.theme_folder}"
+            f"ID={record.record_id} | theme_folder={record.theme_folder}",
+            sheet_row=record.sheet_row,
+            record_id=record.record_id,
+            theme_folder=record.theme_folder,
         )
-        log(f"Theme informado na ingest: {record.theme}")
-        log(f"Caminho de origem informado: {record.source_path}")
-        log(f"Arquivo de entrada resolvido: {record.input_path}")
-        log(f"Perfil de regras associado: {record.rule_profile}")
+        emit_processing_event("record.theme", f"Theme informado na ingest: {record.theme}")
+        emit_processing_event("record.source", f"Caminho de origem informado: {record.source_path}")
+        emit_processing_event("record.input", f"Arquivo de entrada resolvido: {record.input_path}")
+        emit_processing_event("record.rule_profile", f"Perfil de regras associado: {record.rule_profile}")
 
         reset_validate_attribute_mappings()
 
@@ -73,7 +78,11 @@ class ProcessingService:
             log_processing_error("Erro ao resolver configuracao do projeto", exc)
             return ProcessRecordResult(0, None, None)
 
-        log(f"Projeto resolvido: {self.project_name(context)}")
+        emit_processing_event(
+            "project.resolved",
+            f"Projeto resolvido: {self.project_name(context)}",
+            project_name=self.project_name(context),
+        )
 
         try:
             with timed_log_step("Carga e preparo da base de entrada"):

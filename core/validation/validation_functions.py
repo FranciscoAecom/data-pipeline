@@ -7,7 +7,7 @@ import pandas as pd
 
 from core.date import parse_date_series
 from core.schema import target_column_name
-from core.validation.rule_engine import (
+from core.rules.engine import (
     build_field_mapping,
     classify_field_value,
     has_field_rules,

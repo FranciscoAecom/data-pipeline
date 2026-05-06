@@ -4,12 +4,12 @@ from core.batch_processor import process_in_batches
 from core.execution_context import replace_context
 from core.geometry_repair import repair_invalid_geometries
 from core.input_preparation import load_and_prepare_input
-from core.output_manager import assign_output_identifiers
+from core.output.manager import assign_output_identifiers
 from core.rule_runtime import build_auto_mapping
 from core.spatial.regional_bounds import enforce_car_state_bounds
 from core.spatial.spatial_functions import fill_missing_spatial_metrics
 from core.utils import log, timed_log_step
-from core.validation.rule_engine import load_rule_profile
+from core.rules.engine import load_rule_profile
 from core.validation.tabular_schema import get_tabular_schema, normalize_input_schema
 from core.validation.validation_functions import (
     prepare_validate_shapefile_attribute_mappings,

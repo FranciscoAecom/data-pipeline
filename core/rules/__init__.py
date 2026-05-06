@@ -1,0 +1,22 @@
+from core.rules.engine import (
+    RuleProfileResolutionError,
+    build_field_mapping,
+    classify_field_value,
+    expected_rule_profile_name,
+    find_rule_profile_by_theme_folder,
+    get_auto_function_mapping,
+    get_rule_profile_project_name,
+    has_field_rules,
+    invalidate_rule_profile_cache,
+    list_duplicate_rule_profile_stems,
+    list_rule_profiles,
+    load_rule_profile,
+    normalize_profile_name,
+    normalize_rule_text,
+    profile_exists,
+    save_rule_profile,
+    validate_rule_profile,
+    validate_rule_profile_semantics,
+    validate_rule_profile_structure,
+)
+

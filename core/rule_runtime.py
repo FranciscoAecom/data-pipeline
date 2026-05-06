@@ -1,5 +1,5 @@
 from core.utils import log
-from core.validation.rule_engine import get_auto_function_mapping
+from core.rules.engine import get_auto_function_mapping
 
 
 def merge_function_mapping(base_mapping, new_mapping):

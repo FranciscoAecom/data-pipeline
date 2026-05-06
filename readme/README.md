@@ -166,8 +166,9 @@ Core:
 - `core/naming.py`: nomes de saida e caminhos por `theme_folder`
 - `core/optional_functions.py`: funcoes opcionais genericas e integracao com projetos
 - `core/pipeline_operations.py`: operacoes tipadas para funcoes opcionais do pipeline
-- `core/output_paths.py`: caminhos e nomes de saida
-- `core/output_quality.py`: relatorios e resumo de qualidade da saida
+- `core/rules/`: contrato, carregamento, persistencia, validacao e autofix de regras
+- `core/output/`: caminhos, escrita e qualidade das saidas
+- `core/output_paths.py`, `core/output_quality.py`, `core/output_manager.py`: wrappers de compatibilidade para `core/output/`
 - `core/transforms/attribute_transforms.py`: transformacoes de schema e atributos
 - `core/spatial/spatial_functions.py`: operacoes espaciais e validacao OGC
 - `core/spatial/regional_bounds.py`: validacao e correcao de bbox regional para `app_car` e `reserva_legal_car`
@@ -189,6 +190,7 @@ Core:
 - `core/execution_context.py`: contexto de processamento compartilhado entre etapas
 - `core/processing_steps.py`: etapas explicitas do fluxo de processamento
 - `core/processing_errors.py`: erro padronizado de processamento
+- `core/processing_events.py`: eventos estruturados de processamento
 - `core/output_writer.py`: persistencia da saida final
 - `core/utils.py`: log contextual
 
