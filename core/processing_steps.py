@@ -7,13 +7,11 @@ from core.input_preparation import load_and_prepare_input
 from core.output.manager import assign_output_identifiers
 from core.rule_runtime import build_auto_mapping
 from core.spatial.regional_bounds import enforce_car_state_bounds
-from core.spatial.spatial_functions import fill_missing_spatial_metrics
+from core.spatial.metrics import fill_missing_spatial_metrics
 from core.utils import log, timed_log_step
 from core.rules.engine import load_rule_profile
 from core.validation.tabular_schema import get_tabular_schema, normalize_input_schema
-from core.validation.validation_functions import (
-    prepare_validate_shapefile_attribute_mappings,
-)
+from core.validation.attribute_mapping import prepare_validate_shapefile_attribute_mappings
 
 
 def load_input_step(context):
@@ -53,6 +51,7 @@ def prepare_mapping_step(context):
         context.gdf,
         mapping,
         context.rule_profile,
+        validation_session=getattr(context, "validation_session", None),
     )
     return replace_context(context, mapping=mapping)
 
@@ -65,6 +64,7 @@ def run_pipeline_step(context):
         project_name=_project_name(context),
         rule_profile=context.rule_profile,
         optional_functions=context.optional_functions,
+        validation_session=getattr(context, "validation_session", None),
     )
     log(f"Resultado final: {len(final_gdf)} registros processados")
     return replace_context(context, final_gdf=_ensure_final_geodataframe(final_gdf))

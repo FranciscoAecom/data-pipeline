@@ -4,7 +4,7 @@ import pandas as pd
 from core.pipeline import MANDATORY_FUNCTIONS, run_pipeline
 from settings import BATCH_SIZE
 from core.utils import log
-from core.validation.validation_functions import log_validation_summary
+from core.validation.summary import log_validation_summary
 
 
 def _new_stats_total():
@@ -43,6 +43,7 @@ def process_in_batches(
     project_name=None,
     rule_profile=None,
     optional_functions=None,
+    validation_session=None,
 ):
     total = len(gdf)
     log(f"Iniciando processamento em batches ({total} registros)")
@@ -67,6 +68,7 @@ def process_in_batches(
             project_name=project_name,
             rule_profile=rule_profile,
             optional_functions=optional_functions,
+            validation_session=validation_session,
         )
 
         results.append(processed)
@@ -92,6 +94,6 @@ def process_in_batches(
     if final_stats["reprojected_to_wgs84"] > 0:
         log("Reprojetado para WGS84")
 
-    log_validation_summary()
+    log_validation_summary(validation_session=validation_session)
 
     return final_gdf, final_stats

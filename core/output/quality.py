@@ -2,13 +2,15 @@ from dataclasses import dataclass
 
 from core.geometry_repair import INTERNAL_SAFE_REPAIR_FLAG
 from core.reporting import export_duplicate_reports
-from core.spatial.spatial_functions import (
+from core.spatial.duplicates import (
     get_geometric_duplicate_mask,
     get_geometric_duplicate_records,
+)
+from core.spatial.ogc_validation import (
     get_invalid_ogc_records,
 )
 from core.utils import log
-from core.validation.validation_functions import (
+from core.validation.duplicates import (
     get_attribute_duplicate_mask,
     get_attribute_duplicate_records,
 )

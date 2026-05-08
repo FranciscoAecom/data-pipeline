@@ -1,8 +1,9 @@
-from core.spatial.spatial_functions import get_finite_geometry_mask, repair_geometry_safely
+from core.spatial.repair import (
+    INTERNAL_SAFE_REPAIR_FLAG,
+    get_finite_geometry_mask,
+    repair_geometry_safely,
+)
 from core.utils import log
-
-
-INTERNAL_SAFE_REPAIR_FLAG = "__internal_geom_null_safe_repair"
 
 
 def repair_invalid_geometries(gdf):

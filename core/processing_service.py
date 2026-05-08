@@ -19,10 +19,8 @@ from core.processing_steps import (
 from core.rule_runtime import build_auto_mapping
 from core.utils import log, timed_log_step
 from core.rules.autofix import autofix_rule_profile_from_invalid_domains
-from core.validation.validation_functions import (
-    prepare_validate_shapefile_attribute_mappings,
-    reset_validate_attribute_mappings,
-)
+from core.validation.attribute_mapping import prepare_validate_shapefile_attribute_mappings
+from core.validation.session import ValidationSession
 from projects.configs import resolve_project_config
 from projects.registry import get_project_optional_functions
 
@@ -35,27 +33,10 @@ class ProcessRecordResult:
 
 
 class ProcessingService:
-    def build_context(self, record, output_dir, id_start=1):
-        project_config = resolve_project_config(record.theme_folder)
-        optional_functions = get_project_optional_functions(project_config["project_name"])
-        return ProcessingContext(
-            record=record,
-            output_dir=output_dir,
-            project_config=project_config,
-            rule_profile_name=record.rule_profile,
-            rule_profile=None,
-            optional_functions=optional_functions,
-            id_start=id_start,
-        )
+    def _failure_result(self):
+        return ProcessRecordResult(0, None, None)
 
-    def process(
-        self,
-        record,
-        output_dir,
-        id_start=1,
-        use_configured_final_name=False,
-        persist_individual_output=True,
-    ):
+    def _emit_record_start_events(self, record):
         emit_processing_event("record.blank_line", "")
         emit_processing_event(
             "record.start",
@@ -70,13 +51,43 @@ class ProcessingService:
         emit_processing_event("record.input", f"Arquivo de entrada resolvido: {record.input_path}")
         emit_processing_event("record.rule_profile", f"Perfil de regras associado: {record.rule_profile}")
 
-        reset_validate_attribute_mappings()
+    def _run_timed_step(self, label, error_message, operation):
+        try:
+            with timed_log_step(label):
+                return operation()
+        except Exception as exc:
+            log_processing_error(error_message, exc)
+            return None
+
+    def build_context(self, record, output_dir, id_start=1):
+        project_config = resolve_project_config(record.theme_folder)
+        optional_functions = get_project_optional_functions(project_config["project_name"])
+        return ProcessingContext(
+            record=record,
+            output_dir=output_dir,
+            project_config=project_config,
+            rule_profile_name=record.rule_profile,
+            rule_profile=None,
+            optional_functions=optional_functions,
+            id_start=id_start,
+            validation_session=ValidationSession(),
+        )
+
+    def process(
+        self,
+        record,
+        output_dir,
+        id_start=1,
+        use_configured_final_name=False,
+        persist_individual_output=True,
+    ):
+        self._emit_record_start_events(record)
 
         try:
             context = self.build_context(record, output_dir, id_start=id_start)
         except Exception as exc:
             log_processing_error("Erro ao resolver configuracao do projeto", exc)
-            return ProcessRecordResult(0, None, None)
+            return self._failure_result()
 
         emit_processing_event(
             "project.resolved",
@@ -84,29 +95,32 @@ class ProcessingService:
             project_name=self.project_name(context),
         )
 
-        try:
-            with timed_log_step("Carga e preparo da base de entrada"):
-                context = replace_context(context, gdf=self.load_input(context))
-        except Exception as exc:
-            log_processing_error("Erro ao carregar ou validar arquivo de entrada", exc)
-            return ProcessRecordResult(0, None, None)
+        context = self._run_timed_step(
+            "Carga e preparo da base de entrada",
+            "Erro ao carregar ou validar arquivo de entrada",
+            lambda: replace_context(context, gdf=self.load_input(context)),
+        )
+        if context is None:
+            return self._failure_result()
 
-        try:
-            with timed_log_step("Carregamento do perfil de regras"):
-                context = self.attach_rule_profile(context)
-        except Exception as exc:
-            log_processing_error("Erro ao carregar perfil de regras", exc)
-            return ProcessRecordResult(0, None, None)
+        context = self._run_timed_step(
+            "Carregamento do perfil de regras",
+            "Erro ao carregar perfil de regras",
+            lambda: self.attach_rule_profile(context),
+        )
+        if context is None:
+            return self._failure_result()
 
-        try:
-            with timed_log_step("Validacao de schema tabular"):
-                context = replace_context(
-                    context,
-                    gdf=self.validate_tabular_schema(context, context.gdf),
-                )
-        except Exception as exc:
-            log_processing_error("Erro na validacao de schema tabular", exc)
-            return ProcessRecordResult(0, None, None)
+        context = self._run_timed_step(
+            "Validacao de schema tabular",
+            "Erro na validacao de schema tabular",
+            lambda: replace_context(
+                context,
+                gdf=self.validate_tabular_schema(context, context.gdf),
+            ),
+        )
+        if context is None:
+            return self._failure_result()
 
         log_dataset_overview(context.gdf)
 
@@ -116,6 +130,7 @@ class ProcessingService:
                 context.gdf,
                 context.mapping,
                 context.rule_profile,
+                validation_session=context.validation_session,
             )
 
         with timed_log_step("Processamento principal em batches"):
@@ -125,16 +140,17 @@ class ProcessingService:
         autofix_summary = self.autofix_rule_profile(context, context.final_gdf)
         self.log_autofix_summary(autofix_summary)
 
-        try:
-            with timed_log_step("Persistencia de saidas"):
-                context = self.persist_outputs(
-                    context,
-                    use_configured_final_name=use_configured_final_name,
-                    persist_dataset=persist_individual_output,
-                )
-        except Exception as exc:
-            log_processing_error("Erro ao salvar arquivo", exc)
-            return ProcessRecordResult(0, None, None)
+        context = self._run_timed_step(
+            "Persistencia de saidas",
+            "Erro ao salvar arquivo",
+            lambda: self.persist_outputs(
+                context,
+                use_configured_final_name=use_configured_final_name,
+                persist_dataset=persist_individual_output,
+            ),
+        )
+        if context is None:
+            return self._failure_result()
 
         return ProcessRecordResult(len(context.final_gdf), context.output_path, context.final_gdf)
 

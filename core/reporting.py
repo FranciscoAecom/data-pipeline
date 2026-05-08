@@ -4,8 +4,9 @@ import geopandas as gpd
 
 from core.dataset_io import write_output_gpkg
 from settings import GEOM_DUPLICATES_LAYER, OGC_INVALID_LAYER, OGC_REASON_FIELD
-from core.spatial.spatial_functions import get_geometric_duplicate_records, get_invalid_ogc_records
-from core.validation.validation_functions import get_attribute_duplicate_records
+from core.spatial.duplicates import get_geometric_duplicate_records
+from core.spatial.ogc_validation import get_invalid_ogc_records
+from core.validation.duplicates import get_attribute_duplicate_records
 
 
 def export_duplicate_reports(

@@ -3,13 +3,13 @@ import geopandas as gpd
 from core.transforms.attribute_transforms import add_sequential_id
 from core.optional_functions import apply_optional_functions
 from settings import DEFAULT_INPUT_CRS
-from core.spatial.spatial_functions import (
+from core.spatial.crs import reproject_shapefile
+from core.spatial.metrics import (
     add_centroid_coordinates,
     calculate_area_hectares,
     calculate_perimeter_km,
-    force_geometry_2d,
-    reproject_shapefile,
 )
+from core.spatial.repair import force_geometry_2d
 from core.utils import log
 
 
@@ -43,6 +43,7 @@ def run_pipeline(
     project_name=None,
     rule_profile=None,
     optional_functions=None,
+    validation_session=None,
 ):
     stats = {
         "optional_functions": [],
@@ -72,6 +73,7 @@ def run_pipeline(
             project_name=project_name,
             optional_functions=optional_functions,
             rule_profile=rule_profile,
+            validation_session=validation_session,
         )
 
     return _ensure_geodataframe(gdf), stats

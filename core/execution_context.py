@@ -17,6 +17,7 @@ class ProcessingContext:
     final_gdf: gpd.GeoDataFrame | None = None
     mapping: dict | None = None
     output_path: str | None = None
+    validation_session: object | None = None
 
     @property
     def project_name(self):

@@ -6,6 +6,7 @@ import geopandas as gpd
 from shapely.geometry import Point
 
 from core.processing_service import ProcessRecordResult, ProcessingService
+from core.validation.session import ValidationSession
 
 
 def _record():
@@ -30,7 +31,6 @@ def _gdf():
 
 
 class ProcessingServiceTests(unittest.TestCase):
-    @patch("core.processing_service.reset_validate_attribute_mappings")
     @patch.object(ProcessingService, "attach_rule_profile")
     @patch.object(ProcessingService, "build_context")
     @patch.object(ProcessingService, "load_input")
@@ -39,7 +39,6 @@ class ProcessingServiceTests(unittest.TestCase):
         mock_load_input,
         mock_build_context,
         mock_attach_rule_profile,
-        mock_reset_validate_attribute_mappings,
     ):
         record = _record()
         mock_build_context.return_value = SimpleNamespace(
@@ -50,17 +49,16 @@ class ProcessingServiceTests(unittest.TestCase):
             rule_profile_name=record.rule_profile,
             optional_functions={},
             id_start=1,
+            validation_session=ValidationSession(),
         )
         mock_load_input.side_effect = RuntimeError("falha na carga")
 
         result = ProcessingService().process(record, output_dir="tests/_tmp_output")
 
         self.assertEqual(result, ProcessRecordResult(0, None, None))
-        mock_reset_validate_attribute_mappings.assert_called_once()
         mock_attach_rule_profile.assert_not_called()
 
     @patch("core.processing_service.log_dataset_overview")
-    @patch("core.processing_service.reset_validate_attribute_mappings")
     @patch.object(ProcessingService, "attach_rule_profile")
     @patch.object(ProcessingService, "build_context")
     @patch.object(ProcessingService, "load_input")
@@ -69,7 +67,6 @@ class ProcessingServiceTests(unittest.TestCase):
         mock_load_input,
         mock_build_context,
         mock_attach_rule_profile,
-        mock_reset_validate_attribute_mappings,
         mock_log_dataset_overview,
     ):
         record = _record()
@@ -81,6 +78,7 @@ class ProcessingServiceTests(unittest.TestCase):
             rule_profile_name=record.rule_profile,
             optional_functions={},
             id_start=1,
+            validation_session=ValidationSession(),
         )
         context_with_profile = SimpleNamespace(
             **{
@@ -100,7 +98,6 @@ class ProcessingServiceTests(unittest.TestCase):
         result = ProcessingService().process(record, output_dir="tests/_tmp_output")
 
         self.assertEqual(result, ProcessRecordResult(0, None, None))
-        mock_reset_validate_attribute_mappings.assert_called_once()
         mock_log_dataset_overview.assert_not_called()
 
     @patch("core.output.writer.save_outputs")
@@ -114,10 +111,8 @@ class ProcessingServiceTests(unittest.TestCase):
     @patch.object(ProcessingService, "attach_rule_profile")
     @patch.object(ProcessingService, "load_input")
     @patch.object(ProcessingService, "build_context")
-    @patch("core.processing_service.reset_validate_attribute_mappings")
     def test_processes_record_and_returns_final_gdf(
         self,
-        mock_reset_validate_attribute_mappings,
         mock_build_context,
         mock_load_input,
         mock_attach_rule_profile,
@@ -133,6 +128,7 @@ class ProcessingServiceTests(unittest.TestCase):
         record = _record()
         source_gdf = _gdf()
         final_gdf = _gdf()
+        validation_session = ValidationSession()
         context = SimpleNamespace(
             project_config={"project_name": "reserva_legal_car"},
             record=record,
@@ -145,6 +141,7 @@ class ProcessingServiceTests(unittest.TestCase):
             rule_profile_name=record.rule_profile,
             optional_functions={"validate_shapefile_attribute": object()},
             id_start=5,
+            validation_session=validation_session,
         )
         context_with_profile = SimpleNamespace(
             **{**context.__dict__, "rule_profile": {"fields": {}}}
@@ -170,7 +167,6 @@ class ProcessingServiceTests(unittest.TestCase):
         self.assertEqual(result.processed_count, 1)
         self.assertEqual(result.output_path, "tests/_tmp_output/saida.gpkg")
         self.assertTrue(result.final_gdf.equals(final_gdf))
-        mock_reset_validate_attribute_mappings.assert_called_once()
         mock_build_context.assert_called_once_with(record, "tests/_tmp_output", id_start=5)
         mock_attach_rule_profile.assert_called_once_with(context)
         mock_build_mapping.assert_called_once_with(context_with_profile, source_gdf)
@@ -178,6 +174,7 @@ class ProcessingServiceTests(unittest.TestCase):
             source_gdf,
             {"coluna": ["validate_shapefile_attribute"]},
             context_with_profile.rule_profile,
+            validation_session=validation_session,
         )
         mock_process_in_batches.assert_called_once_with(
             source_gdf,
@@ -186,6 +183,7 @@ class ProcessingServiceTests(unittest.TestCase):
             project_name="reserva_legal_car",
             rule_profile=context_with_profile.rule_profile,
             optional_functions=context_with_profile.optional_functions,
+            validation_session=validation_session,
         )
         mock_postprocess.assert_called_once()
         self.assertTrue(mock_autofix_rule_profile.call_args.args[1].equals(final_gdf))
