@@ -1,4 +1,5 @@
-from core.processing_service import ProcessRecordResult, ProcessingService
+from core.processing.result import ProcessRecordResult
+from core.processing_service import ProcessingService
 
 
 def process_record(

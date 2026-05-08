@@ -3,8 +3,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import call, patch
 
+from core.processing.result import ProcessRecordResult
 from core.queue_runner import run_processing_queue
-from core.record_processor import ProcessRecordResult
 
 
 def _record(sheet_row, record_id, theme_folder, source_path):

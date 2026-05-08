@@ -5,7 +5,8 @@ from unittest.mock import Mock, patch
 import geopandas as gpd
 from shapely.geometry import Point
 
-from core.processing_service import ProcessRecordResult, ProcessingService
+from core.processing.result import ProcessRecordResult
+from core.processing_service import ProcessingService
 from core.validation.session import ValidationSession
 
 
@@ -45,15 +46,15 @@ def _gdf():
 
 class ProcessingServiceTests(unittest.TestCase):
     @patch("core.processing_service.run_processing_pipeline")
-    @patch.object(ProcessingService, "build_context")
+    @patch("core.processing_service.build_processing_context")
     def test_returns_zero_when_pipeline_fails(
         self,
-        mock_build_context,
+        mock_build_processing_context,
         mock_run_processing_pipeline,
     ):
         record = _record()
         context = _context(record)
-        mock_build_context.return_value = context
+        mock_build_processing_context.return_value = context
         mock_run_processing_pipeline.return_value = None
 
         result = ProcessingService().process(record, output_dir="tests/_tmp_output")
@@ -62,10 +63,10 @@ class ProcessingServiceTests(unittest.TestCase):
         mock_run_processing_pipeline.assert_called_once()
 
     @patch("core.processing_service.run_processing_pipeline")
-    @patch.object(ProcessingService, "build_context")
+    @patch("core.processing_service.build_processing_context")
     def test_processes_record_and_returns_final_gdf(
         self,
-        mock_build_context,
+        mock_build_processing_context,
         mock_run_processing_pipeline,
     ):
         record = _record()
@@ -79,7 +80,7 @@ class ProcessingServiceTests(unittest.TestCase):
             }
         )
         autofix_service = Mock()
-        mock_build_context.return_value = context
+        mock_build_processing_context.return_value = context
         mock_run_processing_pipeline.return_value = final_context
 
         result = ProcessingService(autofix_service=autofix_service).process(
@@ -93,7 +94,11 @@ class ProcessingServiceTests(unittest.TestCase):
         self.assertEqual(result.processed_count, 1)
         self.assertEqual(result.output_path, "tests/_tmp_output/saida.gpkg")
         self.assertTrue(result.final_gdf.equals(final_gdf))
-        mock_build_context.assert_called_once_with(record, "tests/_tmp_output", id_start=5)
+        mock_build_processing_context.assert_called_once_with(
+            record,
+            "tests/_tmp_output",
+            id_start=5,
+        )
         mock_run_processing_pipeline.assert_called_once_with(
             context,
             autofix_service,
@@ -101,10 +106,10 @@ class ProcessingServiceTests(unittest.TestCase):
             persist_individual_output=False,
         )
 
-    @patch.object(ProcessingService, "build_context")
-    def test_returns_zero_when_context_build_fails(self, mock_build_context):
+    @patch("core.processing_service.build_processing_context")
+    def test_returns_zero_when_context_build_fails(self, mock_build_processing_context):
         record = _record()
-        mock_build_context.side_effect = RuntimeError("config invalida")
+        mock_build_processing_context.side_effect = RuntimeError("config invalida")
 
         result = ProcessingService().process(record, output_dir="tests/_tmp_output")
 

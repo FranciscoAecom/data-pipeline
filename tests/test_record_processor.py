@@ -2,7 +2,7 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from core.processing_service import ProcessRecordResult
+from core.processing.result import ProcessRecordResult
 from core.record_processor import process_record
 
 
