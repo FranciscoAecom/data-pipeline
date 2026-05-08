@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from projects.registry import get_project_optional_functions
-from core.validation.rule_engine import (
+from core.rules.engine import (
     invalidate_rule_profile_cache,
     load_rule_profile,
     save_rule_profile,
@@ -99,7 +99,7 @@ class ValidateRuleProfileTests(unittest.TestCase):
                 },
             )
 
-            with patch("core.validation.rule_engine.RULES_BASE", str(Path(temp_dir) / "rules")):
+            with patch("core.rules.engine.RULES_BASE", str(Path(temp_dir) / "rules")):
                 invalidate_rule_profile_cache()
                 with self.assertRaisesRegex(ValueError, "input_schema.json"):
                     load_rule_profile("demo/perfil")
@@ -116,7 +116,7 @@ class ValidateRuleProfileTests(unittest.TestCase):
                 },
             )
 
-            with patch("core.validation.rule_engine.RULES_BASE", str(Path(temp_dir) / "rules")):
+            with patch("core.rules.engine.RULES_BASE", str(Path(temp_dir) / "rules")):
                 invalidate_rule_profile_cache()
                 with self.assertRaisesRegex(ValueError, "profile.json"):
                     load_rule_profile("demo/perfil")
@@ -136,7 +136,7 @@ class ValidateRuleProfileTests(unittest.TestCase):
                 },
             )
 
-            with patch("core.validation.rule_engine.RULES_BASE", str(Path(temp_dir) / "rules")):
+            with patch("core.rules.engine.RULES_BASE", str(Path(temp_dir) / "rules")):
                 invalidate_rule_profile_cache()
                 with self.assertRaisesRegex(ValueError, "domains.json"):
                     load_rule_profile("demo/perfil")
@@ -153,7 +153,7 @@ class ValidateRuleProfileTests(unittest.TestCase):
                 },
             )
 
-            with patch("core.validation.rule_engine.RULES_BASE", str(Path(temp_dir) / "rules")):
+            with patch("core.rules.engine.RULES_BASE", str(Path(temp_dir) / "rules")):
                 invalidate_rule_profile_cache()
                 with self.assertRaisesRegex(ValueError, "pipeline.json"):
                     load_rule_profile("demo/perfil")
@@ -164,7 +164,7 @@ class ValidateRuleProfileTests(unittest.TestCase):
             profile_dir = rules_base / "demo" / "perfil"
             self._write_modular_profile(profile_dir)
 
-            with patch("core.validation.rule_engine.RULES_BASE", str(rules_base)):
+            with patch("core.rules.engine.RULES_BASE", str(rules_base)):
                 invalidate_rule_profile_cache()
                 profile = load_rule_profile("demo/perfil")
                 profile["fields"]["sdb_codigo"]["accepted_values"].append("B")

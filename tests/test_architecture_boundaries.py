@@ -31,10 +31,11 @@ class ArchitectureBoundaryTests(unittest.TestCase):
 
         self.assertNotIn("write_output_gpkg", text)
 
-    def test_legacy_rule_modules_are_compatibility_wrappers(self):
-        for path in Path("core/validation").glob("rule_*.py"):
-            text = path.read_text(encoding="utf-8").strip()
-            self.assertIn("core.rules", text, msg=str(path))
+    def test_legacy_rule_modules_have_been_removed(self):
+        offenders = list(Path("core/validation").glob("rule_*.py"))
+        offenders.extend(Path("core/validation").glob("domain_rules.py"))
+
+        self.assertEqual([str(path) for path in offenders], [])
 
     def _files_containing(self, root, pattern, forbidden_terms):
         offenders = []

@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from projects.registry import get_project_optional_functions
-from core.validation.rule_engine import (
+from core.rules.engine import (
     list_rule_profiles,
     load_rule_profile,
     validate_rule_profile_semantics,

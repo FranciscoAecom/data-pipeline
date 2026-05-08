@@ -1,7 +1,7 @@
 import os
 from collections import defaultdict
 
-from core.ingest_loader import load_processing_queue
+from core.ingest.loader import load_processing_queue
 from core.input_preparation import log_queue_summary
 from core.output.manager import (
     append_group_consolidated_output,

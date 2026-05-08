@@ -1,5 +1,5 @@
 from core.dataset_io import read_input_dataset
-from core.ingest_loader import validate_theme_and_attributes
+from core.ingest.dictionary import validate_theme_and_attributes
 from core.transforms.attribute_transforms import clean_whitespace, normalize_columns
 from core.utils import log
 from settings import INGEST_READY_STATUS, INGEST_SHEET_NAME, INGEST_WORKBOOK_PATH

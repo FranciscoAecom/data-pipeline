@@ -31,14 +31,14 @@ def _gdf():
 
 
 class ProcessingServiceTests(unittest.TestCase):
-    @patch.object(ProcessingService, "attach_rule_profile")
+    @patch("core.processing_service.attach_rule_profile_step")
     @patch.object(ProcessingService, "build_context")
-    @patch.object(ProcessingService, "load_input")
+    @patch("core.processing_service.load_input_step")
     def test_returns_zero_when_input_loading_fails(
         self,
-        mock_load_input,
+        mock_load_input_step,
         mock_build_context,
-        mock_attach_rule_profile,
+        mock_attach_rule_profile_step,
     ):
         record = _record()
         mock_build_context.return_value = SimpleNamespace(
@@ -51,22 +51,22 @@ class ProcessingServiceTests(unittest.TestCase):
             id_start=1,
             validation_session=ValidationSession(),
         )
-        mock_load_input.side_effect = RuntimeError("falha na carga")
+        mock_load_input_step.side_effect = RuntimeError("falha na carga")
 
         result = ProcessingService().process(record, output_dir="tests/_tmp_output")
 
         self.assertEqual(result, ProcessRecordResult(0, None, None))
-        mock_attach_rule_profile.assert_not_called()
+        mock_attach_rule_profile_step.assert_not_called()
 
     @patch("core.processing_service.log_dataset_overview")
-    @patch.object(ProcessingService, "attach_rule_profile")
+    @patch("core.processing_service.attach_rule_profile_step")
     @patch.object(ProcessingService, "build_context")
-    @patch.object(ProcessingService, "load_input")
+    @patch("core.processing_service.load_input_step")
     def test_returns_zero_when_tabular_schema_validation_fails(
         self,
-        mock_load_input,
+        mock_load_input_step,
         mock_build_context,
-        mock_attach_rule_profile,
+        mock_attach_rule_profile_step,
         mock_log_dataset_overview,
     ):
         record = _record()
@@ -92,8 +92,10 @@ class ProcessingServiceTests(unittest.TestCase):
             }
         )
         mock_build_context.return_value = context
-        mock_load_input.return_value = _gdf()
-        mock_attach_rule_profile.return_value = context_with_profile
+        mock_load_input_step.return_value = SimpleNamespace(
+            **{**context.__dict__, "gdf": _gdf()}
+        )
+        mock_attach_rule_profile_step.return_value = context_with_profile
 
         result = ProcessingService().process(record, output_dir="tests/_tmp_output")
 
@@ -103,24 +105,22 @@ class ProcessingServiceTests(unittest.TestCase):
     @patch("core.output.writer.save_outputs")
     @patch.object(ProcessingService, "log_autofix_summary")
     @patch.object(ProcessingService, "autofix_rule_profile")
-    @patch.object(ProcessingService, "postprocess")
-    @patch("core.processing_steps.process_in_batches")
-    @patch("core.processing_service.prepare_validate_shapefile_attribute_mappings")
-    @patch.object(ProcessingService, "build_mapping")
+    @patch("core.processing_service.postprocess_step")
+    @patch("core.processing.pipeline_step.process_in_batches")
+    @patch("core.processing_service.prepare_mapping_step")
     @patch("core.processing_service.log_dataset_overview")
-    @patch.object(ProcessingService, "attach_rule_profile")
-    @patch.object(ProcessingService, "load_input")
+    @patch("core.processing_service.attach_rule_profile_step")
+    @patch("core.processing_service.load_input_step")
     @patch.object(ProcessingService, "build_context")
     def test_processes_record_and_returns_final_gdf(
         self,
         mock_build_context,
-        mock_load_input,
-        mock_attach_rule_profile,
+        mock_load_input_step,
+        mock_attach_rule_profile_step,
         mock_log_dataset_overview,
-        mock_build_mapping,
-        mock_prepare_validate_shapefile_attribute_mappings,
+        mock_prepare_mapping_step,
         mock_process_in_batches,
-        mock_postprocess,
+        mock_postprocess_step,
         mock_autofix_rule_profile,
         mock_log_autofix_summary,
         mock_save_outputs,
@@ -148,11 +148,20 @@ class ProcessingServiceTests(unittest.TestCase):
         )
 
         mock_build_context.return_value = context
-        mock_load_input.return_value = source_gdf
-        mock_attach_rule_profile.return_value = context_with_profile
-        mock_build_mapping.return_value = {"coluna": ["validate_shapefile_attribute"]}
+        context_with_input = SimpleNamespace(**{**context.__dict__, "gdf": source_gdf})
+        context_with_mapping = SimpleNamespace(
+            **{
+                **context_with_profile.__dict__,
+                "mapping": {"coluna": ["validate_shapefile_attribute"]},
+            }
+        )
+        mock_load_input_step.return_value = context_with_input
+        mock_attach_rule_profile_step.return_value = context_with_profile
+        mock_prepare_mapping_step.return_value = context_with_mapping
         mock_process_in_batches.return_value = (final_gdf, {"optional_functions": []})
-        mock_postprocess.return_value = final_gdf
+        mock_postprocess_step.return_value = SimpleNamespace(
+            **{**context_with_mapping.__dict__, "final_gdf": final_gdf}
+        )
         mock_autofix_rule_profile.return_value = {"changed": False}
         mock_save_outputs.return_value = "tests/_tmp_output/saida.gpkg"
 
@@ -168,14 +177,9 @@ class ProcessingServiceTests(unittest.TestCase):
         self.assertEqual(result.output_path, "tests/_tmp_output/saida.gpkg")
         self.assertTrue(result.final_gdf.equals(final_gdf))
         mock_build_context.assert_called_once_with(record, "tests/_tmp_output", id_start=5)
-        mock_attach_rule_profile.assert_called_once_with(context)
-        mock_build_mapping.assert_called_once_with(context_with_profile, source_gdf)
-        mock_prepare_validate_shapefile_attribute_mappings.assert_called_once_with(
-            source_gdf,
-            {"coluna": ["validate_shapefile_attribute"]},
-            context_with_profile.rule_profile,
-            validation_session=validation_session,
-        )
+        mock_load_input_step.assert_called_once_with(context)
+        mock_attach_rule_profile_step.assert_called_once_with(context_with_input)
+        mock_prepare_mapping_step.assert_called_once_with(context_with_profile)
         mock_process_in_batches.assert_called_once_with(
             source_gdf,
             {"coluna": ["validate_shapefile_attribute"]},
@@ -185,7 +189,7 @@ class ProcessingServiceTests(unittest.TestCase):
             optional_functions=context_with_profile.optional_functions,
             validation_session=validation_session,
         )
-        mock_postprocess.assert_called_once()
+        mock_postprocess_step.assert_called_once()
         self.assertTrue(mock_autofix_rule_profile.call_args.args[1].equals(final_gdf))
         mock_log_autofix_summary.assert_called_once_with({"changed": False})
         self.assertTrue(mock_save_outputs.call_args.args[0].equals(final_gdf))

@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from core.validation.rule_engine import (
+from core.rules.engine import (
     expected_rule_profile_name,
     find_rule_profile_by_theme_folder,
     get_rule_profile_project_name,
