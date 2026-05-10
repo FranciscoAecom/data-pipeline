@@ -1,4 +1,4 @@
-from core.geometry_repair import INTERNAL_SAFE_REPAIR_FLAG
+from core.spatial.repair import INTERNAL_SAFE_REPAIR_FLAG
 
 
 def drop_internal_output_columns(gdf):

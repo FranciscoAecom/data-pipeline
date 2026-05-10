@@ -19,4 +19,4 @@ from core.rules.engine import (
     validate_rule_profile_semantics,
     validate_rule_profile_structure,
 )
-
+from core.rules.runtime import build_auto_mapping, merge_function_mapping

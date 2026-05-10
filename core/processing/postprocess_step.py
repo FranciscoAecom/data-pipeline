@@ -1,5 +1,5 @@
 from core.execution_context import replace_context
-from core.geometry_repair import repair_invalid_geometries
+from core.spatial.repair import repair_invalid_geometries
 from core.output.identifiers import assign_output_identifiers
 from core.processing.context import project_name
 from core.spatial.metrics import fill_missing_spatial_metrics

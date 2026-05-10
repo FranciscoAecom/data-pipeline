@@ -1,6 +1,6 @@
 from core.utils import log
 from core.date import validate_date_fields
-from core.pipeline_operations import build_pipeline_operation
+from core.processing.operations import build_pipeline_operation
 from core.validation.domain_validation import validate_shapefile_attribute
 
 _QUALIFIED_FUNCTION_CACHE = {}

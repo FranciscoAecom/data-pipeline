@@ -3,7 +3,7 @@ import unittest
 import geopandas as gpd
 from shapely.geometry import Point
 
-from core.geometry_repair import INTERNAL_SAFE_REPAIR_FLAG
+from core.spatial.repair import INTERNAL_SAFE_REPAIR_FLAG
 from core.output.columns import drop_internal_output_columns
 from core.output.identifiers import assign_output_identifiers
 

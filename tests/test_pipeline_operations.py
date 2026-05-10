@@ -1,7 +1,7 @@
 import unittest
 
 from core.optional_functions import build_pipeline_operations
-from core.pipeline_operations import infer_operation_kind
+from core.processing.operations import infer_operation_kind
 
 
 def _noop(gdf, column, **context):

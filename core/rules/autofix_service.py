@@ -1,6 +1,6 @@
 import os
 
-from core.naming import build_theme_output_dir
+from core.output.naming import build_theme_output_dir
 from core.rules.autofix import autofix_rule_profile_from_invalid_domains
 from core.utils import log, timed_log_step
 

@@ -39,11 +39,17 @@ class ArchitectureBoundaryTests(unittest.TestCase):
 
     def test_root_compatibility_facades_stay_thin(self):
         facade_paths = [
+            Path("core/dataset_io.py"),
+            Path("core/geometry_repair.py"),
+            Path("core/naming.py"),
+            Path("core/pipeline.py"),
+            Path("core/pipeline_operations.py"),
             Path("core/processing_service.py"),
             Path("core/processing_events.py"),
             Path("core/processing_errors.py"),
             Path("core/record_processor.py"),
             Path("core/queue_runner.py"),
+            Path("core/rule_runtime.py"),
             Path("core/output_manager.py"),
             Path("core/output_paths.py"),
             Path("core/output_quality.py"),
@@ -60,9 +66,15 @@ class ArchitectureBoundaryTests(unittest.TestCase):
             Path("core"),
             "*.py",
             [
+                "from core.dataset_io import",
+                "from core.geometry_repair import",
+                "from core.naming import",
+                "from core.pipeline import",
+                "from core.pipeline_operations import",
                 "from core.queue_runner import",
                 "from core.record_processor import",
                 "from core.processing_service import",
+                "from core.rule_runtime import",
             ],
         )
 
@@ -70,7 +82,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
 
     def _files_containing(self, root, pattern, forbidden_terms):
         offenders = []
-        for path in root.glob(pattern):
+        for path in root.rglob(pattern):
             text = path.read_text(encoding="utf-8")
             if any(term in text for term in forbidden_terms):
                 offenders.append(str(path))

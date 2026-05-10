@@ -1,5 +1,5 @@
-from core.dataset_io import write_output_gpkg
-from core.geometry_repair import INTERNAL_SAFE_REPAIR_FLAG
+from core.io.dataset import write_output_gpkg
+from core.spatial.repair import INTERNAL_SAFE_REPAIR_FLAG
 from core.output.columns import drop_internal_output_columns
 from core.output.consolidation import append_group_consolidated_output
 from core.output.identifiers import assign_output_identifiers

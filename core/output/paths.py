@@ -1,6 +1,6 @@
 import os
 
-from core.naming import build_final_output_base_name, build_theme_output_dir
+from core.output.naming import build_final_output_base_name, build_theme_output_dir
 
 
 def build_processing_group_key(record):

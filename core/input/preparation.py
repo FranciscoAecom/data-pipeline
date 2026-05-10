@@ -1,4 +1,4 @@
-from core.dataset_io import read_input_dataset
+from core.io.dataset import read_input_dataset
 from core.ingest.dictionary import validate_theme_and_attributes
 from core.transforms.attribute_transforms import clean_whitespace, normalize_columns
 from core.utils import log

@@ -1,5 +1,5 @@
 from core.execution_context import replace_context
-from core.rule_runtime import build_auto_mapping
+from core.rules.runtime import build_auto_mapping
 from core.validation.attribute_mapping import prepare_validate_shapefile_attribute_mappings
 
 

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from core.geometry_repair import INTERNAL_SAFE_REPAIR_FLAG
+from core.spatial.repair import INTERNAL_SAFE_REPAIR_FLAG
 from core.reporting import export_duplicate_reports
 from core.spatial.duplicates import (
     get_geometric_duplicate_mask,

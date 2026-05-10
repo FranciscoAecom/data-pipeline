@@ -1,7 +1,7 @@
 import geopandas as gpd
 import pandas as pd
 
-from core.pipeline import MANDATORY_FUNCTIONS, run_pipeline
+from core.processing.mandatory_pipeline import MANDATORY_FUNCTIONS, run_pipeline
 from settings import BATCH_SIZE
 from core.utils import log
 from core.validation.summary import log_validation_summary

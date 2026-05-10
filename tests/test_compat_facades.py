@@ -27,3 +27,25 @@ class CompatibilityFacadeTests(unittest.TestCase):
         self.assertIs(legacy_run_queue, run_processing_queue)
         self.assertIs(legacy_assign_ids, assign_output_identifiers)
         self.assertIs(legacy_drop_columns, drop_internal_output_columns)
+
+    def test_domain_facades_reexport_new_module_apis(self):
+        from core.io.dataset import read_input_dataset
+        from core.output.naming import build_final_output_base_name
+        from core.processing.mandatory_pipeline import run_pipeline
+        from core.processing.operations import infer_operation_kind
+        from core.rules.runtime import build_auto_mapping
+        from core.spatial.repair import repair_invalid_geometries
+
+        from core.dataset_io import read_input_dataset as legacy_read_input_dataset
+        from core.geometry_repair import repair_invalid_geometries as legacy_repair_invalid
+        from core.naming import build_final_output_base_name as legacy_build_base_name
+        from core.pipeline import run_pipeline as legacy_run_pipeline
+        from core.pipeline_operations import infer_operation_kind as legacy_infer_operation_kind
+        from core.rule_runtime import build_auto_mapping as legacy_build_auto_mapping
+
+        self.assertIs(legacy_read_input_dataset, read_input_dataset)
+        self.assertIs(legacy_repair_invalid, repair_invalid_geometries)
+        self.assertIs(legacy_build_base_name, build_final_output_base_name)
+        self.assertIs(legacy_run_pipeline, run_pipeline)
+        self.assertIs(legacy_infer_operation_kind, infer_operation_kind)
+        self.assertIs(legacy_build_auto_mapping, build_auto_mapping)
