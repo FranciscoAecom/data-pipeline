@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import call, patch
 
 from core.processing.result import ProcessRecordResult
-from core.queue_runner import run_processing_queue
+from core.queue.runner import run_processing_queue
 
 
 def _record(sheet_row, record_id, theme_folder, source_path):
@@ -24,12 +24,12 @@ class QueueRunnerTests(unittest.TestCase):
     def setUp(self):
         self.output_base = str(Path("tests") / "_tmp_output")
 
-    @patch("core.queue_runner.clear_context_log")
-    @patch("core.queue_runner.append_group_consolidated_output")
-    @patch("core.queue_runner.process_record")
-    @patch("core.queue_runner.set_context_log")
-    @patch("core.queue_runner.log_queue_summary")
-    @patch("core.queue_runner.load_processing_queue")
+    @patch("core.queue.runner.clear_context_log")
+    @patch("core.queue.runner.append_group_consolidated_output")
+    @patch("core.queue.runner.process_record")
+    @patch("core.queue.runner.set_context_log")
+    @patch("core.queue.runner.log_queue_summary")
+    @patch("core.queue.runner.load_processing_queue")
     def test_grouped_records_increment_ids_and_append_consolidated_output(
         self,
         mock_load_processing_queue,
@@ -70,11 +70,11 @@ class QueueRunnerTests(unittest.TestCase):
         self.assertEqual(mock_clear_context_log.call_count, 2)
         self.assertEqual(mock_set_context_log.call_count, 2)
 
-    @patch("core.queue_runner.clear_context_log")
-    @patch("core.queue_runner.process_record", side_effect=RuntimeError("boom"))
-    @patch("core.queue_runner.set_context_log")
-    @patch("core.queue_runner.log_queue_summary")
-    @patch("core.queue_runner.load_processing_queue")
+    @patch("core.queue.runner.clear_context_log")
+    @patch("core.queue.runner.process_record", side_effect=RuntimeError("boom"))
+    @patch("core.queue.runner.set_context_log")
+    @patch("core.queue.runner.log_queue_summary")
+    @patch("core.queue.runner.load_processing_queue")
     def test_clears_context_log_even_when_record_processing_fails(
         self,
         mock_load_processing_queue,

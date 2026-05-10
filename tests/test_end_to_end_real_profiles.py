@@ -7,7 +7,7 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point
 
-from core.record_processor import process_record
+from core.processing.record_processor import process_record
 
 
 def _record(input_path, theme_folder, rule_profile, theme):

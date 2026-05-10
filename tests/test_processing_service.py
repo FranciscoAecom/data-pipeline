@@ -6,7 +6,7 @@ import geopandas as gpd
 from shapely.geometry import Point
 
 from core.processing.result import ProcessRecordResult
-from core.processing_service import ProcessingService
+from core.processing.service import ProcessingService
 from core.validation.session import ValidationSession
 
 
@@ -45,8 +45,8 @@ def _gdf():
 
 
 class ProcessingServiceTests(unittest.TestCase):
-    @patch("core.processing_service.run_processing_pipeline")
-    @patch("core.processing_service.build_processing_context")
+    @patch("core.processing.service.run_processing_pipeline")
+    @patch("core.processing.service.build_processing_context")
     def test_returns_zero_when_pipeline_fails(
         self,
         mock_build_processing_context,
@@ -62,8 +62,8 @@ class ProcessingServiceTests(unittest.TestCase):
         self.assertEqual(result, ProcessRecordResult(0, None, None))
         mock_run_processing_pipeline.assert_called_once()
 
-    @patch("core.processing_service.run_processing_pipeline")
-    @patch("core.processing_service.build_processing_context")
+    @patch("core.processing.service.run_processing_pipeline")
+    @patch("core.processing.service.build_processing_context")
     def test_processes_record_and_returns_final_gdf(
         self,
         mock_build_processing_context,
@@ -106,7 +106,7 @@ class ProcessingServiceTests(unittest.TestCase):
             persist_individual_output=False,
         )
 
-    @patch("core.processing_service.build_processing_context")
+    @patch("core.processing.service.build_processing_context")
     def test_returns_zero_when_context_build_fails(self, mock_build_processing_context):
         record = _record()
         mock_build_processing_context.side_effect = RuntimeError("config invalida")

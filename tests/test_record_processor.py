@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from core.processing.result import ProcessRecordResult
-from core.record_processor import process_record
+from core.processing.record_processor import process_record
 
 
 def _record():
@@ -20,7 +20,7 @@ def _record():
 
 
 class RecordProcessorTests(unittest.TestCase):
-    @patch("core.record_processor.ProcessingService")
+    @patch("core.processing.record_processor.ProcessingService")
     def test_delegates_to_processing_service(self, mock_service_cls):
         record = _record()
         mock_service = mock_service_cls.return_value
