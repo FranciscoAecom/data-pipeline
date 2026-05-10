@@ -1,5 +1,5 @@
 from core.execution_context import replace_context
-from core.input_preparation import load_and_prepare_input
+from core.input.preparation import load_and_prepare_input
 
 
 def load_input_step(context):

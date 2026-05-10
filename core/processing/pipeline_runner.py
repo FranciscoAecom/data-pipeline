@@ -1,4 +1,3 @@
-from core.input_preparation import log_dataset_overview
 from core.processing.errors import log_processing_error
 from core.processing.input_step import load_input_step
 from core.processing.mapping_step import prepare_mapping_step
@@ -7,6 +6,7 @@ from core.processing.pipeline_step import run_pipeline_step
 from core.processing.postprocess_step import postprocess_step
 from core.processing.rules_step import attach_rule_profile_step
 from core.processing.schema_step import validate_input_schema_step
+from core.processing.summary import log_dataset_overview
 from core.utils import timed_log_step
 
 

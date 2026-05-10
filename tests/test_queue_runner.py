@@ -1,9 +1,9 @@
-import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import call, patch
+import unittest
+from unittest.mock import patch
 
-from core.processing.result import ProcessRecordResult
+from core.queue.queue_loader import QueueRunContext
 from core.queue.runner import run_processing_queue
 
 
@@ -24,75 +24,61 @@ class QueueRunnerTests(unittest.TestCase):
     def setUp(self):
         self.output_base = str(Path("tests") / "_tmp_output")
 
-    @patch("core.queue.runner.clear_context_log")
-    @patch("core.queue.runner.append_group_consolidated_output")
-    @patch("core.queue.runner.process_record")
-    @patch("core.queue.runner.set_context_log")
-    @patch("core.queue.runner.log_queue_summary")
-    @patch("core.queue.runner.load_processing_queue")
-    def test_grouped_records_increment_ids_and_append_consolidated_output(
+    @patch("core.queue.runner.run_queue_record")
+    @patch("core.queue.runner.prepare_processing_queue")
+    def test_runs_each_record_with_group_state(
         self,
-        mock_load_processing_queue,
-        mock_log_queue_summary,
-        mock_set_context_log,
-        mock_process_record,
-        mock_append_group_consolidated_output,
-        mock_clear_context_log,
+        mock_prepare_processing_queue,
+        mock_run_queue_record,
     ):
         records = [
             _record(2, 10, "rl_car_ac", "origem_a"),
             _record(2, 10, "rl_car_ac", "origem_a"),
         ]
-        mock_load_processing_queue.return_value = (
-            records,
-            [],
-            {"total_records": 2, "ready_candidates": 2, "eligible_records": 2, "issues": 0},
+        mock_prepare_processing_queue.return_value = QueueRunContext(
+            records=records,
+            output_dir=self.output_base,
         )
-        mock_process_record.side_effect = [
-            ProcessRecordResult(3, None, "gdf1"),
-            ProcessRecordResult(2, None, "gdf2"),
-        ]
 
         run_processing_queue(output_base=self.output_base)
 
-        mock_log_queue_summary.assert_called_once()
-        self.assertEqual(mock_process_record.call_args_list[0].kwargs["id_start"], 1)
-        self.assertEqual(mock_process_record.call_args_list[1].kwargs["id_start"], 4)
-        self.assertEqual(mock_process_record.call_count, 2)
-        self.assertEqual(mock_append_group_consolidated_output.call_count, 2)
+        mock_prepare_processing_queue.assert_called_once_with(self.output_base)
+        self.assertEqual(mock_run_queue_record.call_count, 2)
+        self.assertIs(mock_run_queue_record.call_args_list[0].args[0], records[0])
+        self.assertIs(mock_run_queue_record.call_args_list[1].args[0], records[1])
+        self.assertEqual(mock_run_queue_record.call_args_list[0].args[1], self.output_base)
         self.assertEqual(
-            mock_append_group_consolidated_output.call_args_list,
-            [
-                call(records[0], "gdf1", self.output_base, append=False),
-                call(records[1], "gdf2", self.output_base, append=True),
-            ],
+            mock_run_queue_record.call_args_list[0].kwargs,
+            {"keep_individual_outputs_when_grouping": False},
         )
-        self.assertEqual(mock_clear_context_log.call_count, 2)
-        self.assertEqual(mock_set_context_log.call_count, 2)
 
-    @patch("core.queue.runner.clear_context_log")
-    @patch("core.queue.runner.process_record", side_effect=RuntimeError("boom"))
-    @patch("core.queue.runner.set_context_log")
-    @patch("core.queue.runner.log_queue_summary")
-    @patch("core.queue.runner.load_processing_queue")
-    def test_clears_context_log_even_when_record_processing_fails(
+    @patch("core.queue.runner.run_queue_record", side_effect=RuntimeError("boom"))
+    @patch("core.queue.runner.prepare_processing_queue")
+    def test_propagates_record_processing_errors(
         self,
-        mock_load_processing_queue,
-        mock_log_queue_summary,
-        mock_set_context_log,
-        mock_process_record,
-        mock_clear_context_log,
+        mock_prepare_processing_queue,
+        mock_run_queue_record,
     ):
         records = [_record(2, 10, "rl_car_ac", "origem_a")]
-        mock_load_processing_queue.return_value = (
-            records,
-            [],
-            {"total_records": 1, "ready_candidates": 1, "eligible_records": 1, "issues": 0},
+        mock_prepare_processing_queue.return_value = QueueRunContext(
+            records=records,
+            output_dir=self.output_base,
         )
 
         with self.assertRaisesRegex(RuntimeError, "boom"):
             run_processing_queue(output_base=self.output_base)
 
-        mock_log_queue_summary.assert_called_once()
-        mock_set_context_log.assert_called_once()
-        mock_clear_context_log.assert_called_once()
+        mock_prepare_processing_queue.assert_called_once_with(self.output_base)
+        mock_run_queue_record.assert_called_once()
+
+    @patch("core.queue.runner.run_queue_record")
+    @patch("core.queue.runner.prepare_processing_queue", return_value=None)
+    def test_returns_when_queue_cannot_be_prepared(
+        self,
+        mock_prepare_processing_queue,
+        mock_run_queue_record,
+    ):
+        run_processing_queue(output_base=self.output_base)
+
+        mock_prepare_processing_queue.assert_called_once_with(self.output_base)
+        mock_run_queue_record.assert_not_called()

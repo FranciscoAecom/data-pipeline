@@ -4,7 +4,8 @@ import geopandas as gpd
 from shapely.geometry import Point
 
 from core.geometry_repair import INTERNAL_SAFE_REPAIR_FLAG
-from core.output_manager import assign_output_identifiers, drop_internal_output_columns
+from core.output.columns import drop_internal_output_columns
+from core.output.identifiers import assign_output_identifiers
 
 
 class OutputManagerTests(unittest.TestCase):
@@ -51,4 +52,3 @@ class OutputManagerTests(unittest.TestCase):
 
         self.assertNotIn(INTERNAL_SAFE_REPAIR_FLAG, result.columns)
         self.assertIn("nome", result.columns)
-

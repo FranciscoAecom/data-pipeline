@@ -1,18 +1,15 @@
 from core.dataset_io import write_output_gpkg
 from core.geometry_repair import INTERNAL_SAFE_REPAIR_FLAG
-from core.output.manager import (
-    append_group_consolidated_output,
-    assign_output_identifiers,
-    drop_internal_output_columns,
-    persist_output_dataset,
-    save_outputs,
-)
+from core.output.columns import drop_internal_output_columns
+from core.output.consolidation import append_group_consolidated_output
+from core.output.identifiers import assign_output_identifiers
 from core.output.paths import (
     build_group_log_path,
     build_group_merged_output_path,
     build_processing_group_key,
     resolve_output_path,
 )
+from core.output.persistence import persist_output_dataset, save_outputs
 from core.output.quality import (
     OutputQualitySummary,
     build_output_quality_summary,

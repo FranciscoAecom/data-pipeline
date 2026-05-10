@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from core.output.manager import build_processing_group_key
+from core.output.paths import build_processing_group_key
 
 
 class QueueGroupState:

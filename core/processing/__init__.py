@@ -22,11 +22,13 @@ from core.processing.result import ProcessRecordResult, failure_result, success_
 from core.processing.rules_step import attach_rule_profile_step
 from core.processing.schema_step import validate_input_schema_step
 from core.processing.service import ProcessingService
+from core.processing.summary import log_dataset_overview
 
 __all__ = [
     "attach_rule_profile_step",
     "input_error",
     "log_processing_error",
+    "log_dataset_overview",
     "emit_processing_event",
     "emit_project_resolved_event",
     "emit_record_start_events",

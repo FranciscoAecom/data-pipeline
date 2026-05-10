@@ -1,6 +1,6 @@
 # main.py
 
-from core.queue_runner import run_processing_queue
+from core.queue.runner import run_processing_queue
 from core.utils import log
 
 

@@ -37,6 +37,37 @@ class ArchitectureBoundaryTests(unittest.TestCase):
 
         self.assertEqual([str(path) for path in offenders], [])
 
+    def test_root_compatibility_facades_stay_thin(self):
+        facade_paths = [
+            Path("core/processing_service.py"),
+            Path("core/processing_events.py"),
+            Path("core/processing_errors.py"),
+            Path("core/record_processor.py"),
+            Path("core/queue_runner.py"),
+            Path("core/output_manager.py"),
+            Path("core/output_paths.py"),
+            Path("core/output_quality.py"),
+            Path("core/output_writer.py"),
+        ]
+
+        for path in facade_paths:
+            text = path.read_text(encoding="utf-8")
+            self.assertNotIn("\ndef ", text, path)
+            self.assertNotIn("\nclass ", text, path)
+
+    def test_runtime_code_uses_new_queue_and_processing_modules(self):
+        offenders = self._files_containing(
+            Path("core"),
+            "*.py",
+            [
+                "from core.queue_runner import",
+                "from core.record_processor import",
+                "from core.processing_service import",
+            ],
+        )
+
+        self.assertEqual(offenders, [])
+
     def _files_containing(self, root, pattern, forbidden_terms):
         offenders = []
         for path in root.glob(pattern):
