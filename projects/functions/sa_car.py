@@ -45,5 +45,5 @@ def sa_car_transform_desc_condic(gdf, column, **_context):
 
 
 PROJECT_OPTIONAL_FUNCTIONS = {
-    "reserva_legal_car_transform_desc_condic": sa_car_transform_desc_condic,
+    "sa_car_transform_desc_condic": sa_car_transform_desc_condic,
 }

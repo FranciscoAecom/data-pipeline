@@ -10,7 +10,7 @@
       "validate_shapefile_attribute"
     ],
     "sdb_desc_condic": [
-      "validate_shapefile_attribute"
+      "sa_car_transform_desc_condic"
     ]
   }
 }
