@@ -32,6 +32,7 @@ class RuleProfilesIntegrationTests(unittest.TestCase):
         self.assertIn("app_car/app_car_ac", profiles)
         self.assertIn("estado/estado", profiles)
         self.assertIn("reserva_legal_car/rl_car_sp", profiles)
+        self.assertIn("sa_car/sa_car_ac", profiles)
         self.assertIn("autorizacao_para_supressao_vegetal/auth_supn", profiles)
 
     def test_modular_rule_profile_loads_as_consolidated_profile(self):

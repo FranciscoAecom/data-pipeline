@@ -1,0 +1,36 @@
+{
+  "columns": {
+    "sdb_cod_tema": {
+      "dtype": "string",
+      "required": true,
+      "nullable": false
+    },
+    "sdb_nom_tema": {
+      "dtype": "string",
+      "required": true,
+      "nullable": false
+    },
+    "sdb_ind_status": {
+      "dtype": "string",
+      "required": true,
+      "nullable": false
+    },
+    "sdb_desc_condic": {
+      "dtype": "string",
+      "required": true,
+      "nullable": true
+    },
+    "sdb_cod_imovel": {
+      "dtype": "string",
+      "required": true,
+      "nullable": true
+    },
+    "sdb_num_area": {
+      "dtype": "number",
+      "required": true,
+      "nullable": true
+    }
+  },
+  "require_geometry": true,
+  "allow_extra_columns": true
+}

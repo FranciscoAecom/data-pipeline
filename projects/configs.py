@@ -31,6 +31,13 @@ PROJECT_CONFIGS = {
         "output_name_template": "pol_pcd_{theme_folder}_{date_yyyymmdd}",
         "reference_date": "20260301",
     },
+    "sa_car": {
+        "project_name": "sa_car",
+        "display_name": "CAR de Servidao Administrativa",
+        "theme_prefixes": ("sa_car_",),
+        "output_name_template": "pol_pcd_{theme_folder}_{date_yyyymmdd}",
+        "reference_date": "20260301",
+    },
     "autorizacao_para_supressao_vegetal": {
         "project_name": "autorizacao_para_supressao_vegetal",
         "display_name": "Autorizacao para Supressao Vegetal",

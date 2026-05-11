@@ -1,0 +1,47 @@
+{
+  "fields": {
+    "sdb_cod_tema": {
+      "accepted_values": [
+        "AREA_ENTORNO_RESERVATORIO_ENERGIA",
+        "AREA_INFRAESTRUTURA_PUBLICA",
+        "AREA_SERVIDAO_ADMINISTRATIVA_TOTAL",
+        "AREA_UTILIDADE_PUBLICA",
+        "RESERVATORIO_ENERGIA"
+      ],
+      "aliases": {}
+    },
+    "sdb_nom_tema": {
+      "accepted_values": [
+        "Area de Servidao Administrativa Total",
+        "Entorno de Reservatorio para Abastecimento ou Geracao de Energia",
+        "Infraestrutura Publica",
+        "Reservatorio para Abastecimento ou Geracao de Energia",
+        "Utilidade Publica"
+      ],
+      "aliases": {}
+    },
+    "sdb_ind_status": {
+      "accepted_values": [
+        "AT",
+        "CA",
+        "PE",
+        "SU"
+      ],
+      "aliases": {}
+    },
+    "sdb_desc_condic": {
+      "accepted_values": [
+        "Aguardando analise",
+        "Analisado, aguardando atendimento a notificacao",
+        "Analisado, aguardando regularizacao ambiental (Lei n 12.651/2012)",
+        "Analisado, em conformidade com a Lei n 12.651/2012",
+        "Analisado, em regularizacao ambiental (Lei n 12.651/2012)",
+        "Cancelado por decisao administrativa",
+        "Cancelado por decisao judicial",
+        "Cancelado por duplicidade",
+        "Em analise"
+      ],
+      "aliases": {}
+    }
+  }
+}
