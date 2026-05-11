@@ -1,4 +1,11 @@
 {
   "relations": {
+    "cod_tema_to_nome_tema": {
+      "AREA_ENTORNO_RESERVATORIO_ENERGIA": "Entorno de Reservatorio para Abastecimento ou Geracao de Energia",
+      "AREA_INFRAESTRUTURA_PUBLICA": "Infraestrutura Publica",
+      "AREA_UTILIDADE_PUBLICA": "Utilidade Publica",
+      "AREA_SERVIDAO_ADMINISTRATIVA_TOTAL": "Area de Servidao Administrativa Total",
+      "RESERVATORIO_ENERGIA": "Reservatorio para Abastecimento ou Geracao de Energia"
+    }
   }
 }
