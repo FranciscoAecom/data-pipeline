@@ -1,4 +1,4 @@
-from core.execution_context import replace_context
+from core.processing.context import replace_context
 from core.input.preparation import load_and_prepare_input
 
 

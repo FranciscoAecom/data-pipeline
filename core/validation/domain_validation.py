@@ -1,6 +1,6 @@
 from core.date import parse_date_series
 from core.rules.engine import has_field_rules
-from core.schema import target_column_name
+from core.validation.schema import target_column_name
 from core.utils import log
 from core.validation.relation_validation import (
     apply_relation_consistency_if_needed,

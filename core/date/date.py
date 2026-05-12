@@ -1,6 +1,6 @@
 import pandas as pd
 
-from core.schema import target_column_name
+from core.validation.schema import target_column_name
 
 
 def parse_date_series(series):

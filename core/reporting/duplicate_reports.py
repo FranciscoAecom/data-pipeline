@@ -3,10 +3,36 @@ from pathlib import Path
 import geopandas as gpd
 
 from core.io.dataset import write_output_gpkg
-from settings import GEOM_DUPLICATES_LAYER, OGC_INVALID_LAYER, OGC_REASON_FIELD
 from core.spatial.duplicates import get_geometric_duplicate_records
 from core.spatial.ogc_validation import get_invalid_ogc_records
 from core.validation.duplicates import get_attribute_duplicate_records
+from settings import GEOM_DUPLICATES_LAYER, OGC_INVALID_LAYER, OGC_REASON_FIELD
+
+
+def _prepare_tabular_export(df):
+    export_df = df.copy()
+    if "geometry" in export_df.columns:
+        export_df["geometry_wkt"] = export_df.geometry.to_wkt()
+        export_df = export_df.drop(columns="geometry")
+    return export_df
+
+
+def _save_tabular_report(path, df, sheet_name):
+    export_df = _prepare_tabular_export(df)
+    try:
+        export_df.to_excel(path, index=False, sheet_name=sheet_name)
+    except ImportError:
+        csv_path = Path(path).with_suffix(".csv")
+        export_df.to_csv(csv_path, index=False)
+        return str(csv_path)
+    return str(path)
+
+
+def _save_geospatial_report(path, df, layer_name, crs):
+    export_df = gpd.GeoDataFrame(df.copy(), geometry="geometry", crs=crs)
+    if OGC_REASON_FIELD in export_df.columns:
+        export_df[OGC_REASON_FIELD] = export_df[OGC_REASON_FIELD].fillna("").astype(str)
+    return write_output_gpkg(export_df, path, layer=layer_name)
 
 
 def export_duplicate_reports(
@@ -32,44 +58,31 @@ def export_duplicate_reports(
     if ogc_invalid is None or ogc_invalid_count is None or ogc_error_summary is None:
         ogc_invalid, ogc_invalid_count, ogc_error_summary = get_invalid_ogc_records(gdf)
 
-    def _prepare_export(df):
-        export_df = df.copy()
-        if "geometry" in export_df.columns:
-            export_df["geometry_wkt"] = export_df.geometry.to_wkt()
-            export_df = export_df.drop(columns="geometry")
-        return export_df
-
-    def _save(path, df, sheet_name):
-        export_df = _prepare_export(df)
-        try:
-            export_df.to_excel(path, index=False, sheet_name=sheet_name)
-        except ImportError:
-            csv_path = Path(path).with_suffix(".csv")
-            export_df.to_csv(csv_path, index=False)
-            return str(csv_path)
-        return str(path)
-
-    def _save_gpkg(path, df, layer_name):
-        export_df = gpd.GeoDataFrame(df.copy(), geometry="geometry", crs=gdf.crs)
-        if OGC_REASON_FIELD in export_df.columns:
-            export_df[OGC_REASON_FIELD] = export_df[OGC_REASON_FIELD].fillna("").astype(str)
-        return write_output_gpkg(export_df, path, layer=layer_name)
-
     attr_file = None
     geom_file = None
     ogc_file = None
 
     if attr_count > 0:
         attr_report = output_path / f"{base_name}_duplicados_atributos.xlsx"
-        attr_file = _save(attr_report, attr_duplicates, "atributos")
+        attr_file = _save_tabular_report(attr_report, attr_duplicates, "atributos")
 
     if geom_count > 0:
         geom_report = output_path / f"{base_name}_duplicados_geometrias.gpkg"
-        geom_file = _save_gpkg(geom_report, geom_duplicates, GEOM_DUPLICATES_LAYER)
+        geom_file = _save_geospatial_report(
+            geom_report,
+            geom_duplicates,
+            GEOM_DUPLICATES_LAYER,
+            gdf.crs,
+        )
 
     if ogc_invalid_count > 0:
         ogc_report = output_path / f"{base_name}_geometrias_invalidas_ogc.gpkg"
-        ogc_file = _save_gpkg(ogc_report, ogc_invalid, OGC_INVALID_LAYER)
+        ogc_file = _save_geospatial_report(
+            ogc_report,
+            ogc_invalid,
+            OGC_INVALID_LAYER,
+            gdf.crs,
+        )
 
     return (
         attr_file,
@@ -80,3 +93,6 @@ def export_duplicate_reports(
         ogc_invalid_count,
         ogc_error_summary,
     )
+
+
+__all__ = ["export_duplicate_reports"]

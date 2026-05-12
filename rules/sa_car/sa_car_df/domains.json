@@ -1,4 +1,4 @@
-{
+﻿{
   "fields": {
     "sdb_cod_tema": {
       "accepted_values": [
@@ -29,7 +29,7 @@
       ],
       "aliases": {}
     },
-    "sdb_des_condic": {
+    "sdb_desc_condic": {
       "accepted_values": [
         "Aguardando analise",
         "Aguardando analise, apos revisao ou atendimento da notificacao",

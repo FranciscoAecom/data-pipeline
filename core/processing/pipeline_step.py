@@ -1,8 +1,7 @@
 import geopandas as gpd
 
-from core.batch_processor import process_in_batches
-from core.execution_context import replace_context
-from core.processing.context import project_name
+from core.processing.batch import process_in_batches
+from core.processing.context import replace_context
 from core.utils import log
 
 
@@ -11,7 +10,7 @@ def run_pipeline_step(context):
         context.gdf,
         context.mapping,
         id_start=context.id_start,
-        project_name=project_name(context),
+        project_name=context.project_name,
         rule_profile=context.rule_profile,
         optional_functions=context.optional_functions,
         validation_session=getattr(context, "validation_session", None),

@@ -3,7 +3,7 @@ from collections import defaultdict
 
 import pandas as pd
 
-from core.helper_unique_values import export_unique_values_from_dataframe
+from core.rules.unique_values import export_unique_values_from_dataframe
 from core.rules.engine import (
     classify_field_value,
     normalize_rule_text,

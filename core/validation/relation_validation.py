@@ -1,7 +1,7 @@
 import pandas as pd
 
 from core.rules.engine import classify_field_value, has_field_rules
-from core.schema import target_column_name
+from core.validation.schema import target_column_name
 from core.validation.summary import relation_summary_entry
 
 

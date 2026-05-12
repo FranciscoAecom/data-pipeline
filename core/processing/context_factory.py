@@ -1,4 +1,4 @@
-from core.execution_context import ProcessingContext
+from core.processing.context import ProcessingContext
 from core.validation.session import ValidationSession
 from projects.configs import resolve_project_config
 from projects.registry import get_project_optional_functions

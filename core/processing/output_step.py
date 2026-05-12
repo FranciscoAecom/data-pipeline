@@ -1,4 +1,4 @@
-from core.execution_context import replace_context
+from core.processing.context import replace_context
 from core.output.persistence import save_outputs
 
 

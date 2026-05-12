@@ -39,8 +39,11 @@ class ArchitectureBoundaryTests(unittest.TestCase):
 
     def test_root_compatibility_facades_stay_thin(self):
         facade_paths = [
+            Path("core/batch_processor.py"),
             Path("core/dataset_io.py"),
+            Path("core/execution_context.py"),
             Path("core/geometry_repair.py"),
+            Path("core/helper_unique_values.py"),
             Path("core/naming.py"),
             Path("core/pipeline.py"),
             Path("core/pipeline_operations.py"),
@@ -50,6 +53,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
             Path("core/record_processor.py"),
             Path("core/queue_runner.py"),
             Path("core/rule_runtime.py"),
+            Path("core/schema.py"),
             Path("core/output_manager.py"),
             Path("core/output_paths.py"),
             Path("core/output_quality.py"),
@@ -66,8 +70,11 @@ class ArchitectureBoundaryTests(unittest.TestCase):
             Path("core"),
             "*.py",
             [
+                "from core.batch_processor import",
                 "from core.dataset_io import",
+                "from core.execution_context import",
                 "from core.geometry_repair import",
+                "from core.helper_unique_values import",
                 "from core.naming import",
                 "from core.pipeline import",
                 "from core.pipeline_operations import",
@@ -75,6 +82,7 @@ class ArchitectureBoundaryTests(unittest.TestCase):
                 "from core.record_processor import",
                 "from core.processing_service import",
                 "from core.rule_runtime import",
+                "from core.schema import",
             ],
         )
 

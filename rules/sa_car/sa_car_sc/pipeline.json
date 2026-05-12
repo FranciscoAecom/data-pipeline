@@ -1,4 +1,4 @@
-{
+﻿{
   "auto_functions": {
     "sdb_cod_tema": [
       "validate_shapefile_attribute"
@@ -9,7 +9,7 @@
     "sdb_ind_status": [
       "validate_shapefile_attribute"
     ],
-    "sdb_des_condic": [
+    "sdb_desc_condic": [
       "sa_car_transform_desc_condic"
     ]
   }
