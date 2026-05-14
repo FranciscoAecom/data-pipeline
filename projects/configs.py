@@ -38,6 +38,13 @@ PROJECT_CONFIGS = {
         "output_name_template": "pol_pcd_{theme_folder}_{date_yyyymmdd}",
         "reference_date": "20260301",
     },
+    "ur_car": {
+        "project_name": "ur_car",
+        "display_name": "Area de Uso Restrito nos imoveis rurais",
+        "theme_prefixes": ("ur_car_",),
+        "output_name_template": "pol_pcd_{theme_folder}_{date_yyyymmdd}",
+        "reference_date": "20260301",
+    },
     "autorizacao_para_supressao_vegetal": {
         "project_name": "autorizacao_para_supressao_vegetal",
         "display_name": "Autorizacao para Supressao Vegetal",

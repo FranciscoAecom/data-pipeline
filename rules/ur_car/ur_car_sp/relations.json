@@ -1,0 +1,8 @@
+{
+  "relations": {
+    "cod_tema_to_nom_tema": {
+      "AREA_USO_RESTRITO_DECLIVIDADE_25_A_45": "Area de Uso Restrito para declividade de 25 a 45 graus",
+      "AREA_USO_RESTRITO_PANTANEIRA": "Area de Uso Restrito para regioes pantaneiras"
+    }
+  }
+}

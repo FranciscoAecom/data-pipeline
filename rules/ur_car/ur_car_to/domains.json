@@ -1,0 +1,36 @@
+{
+  "fields": {
+    "sdb_cod_tema": {
+      "accepted_values": [
+        "AREA_USO_RESTRITO_DECLIVIDADE_25_A_45",
+        "AREA_USO_RESTRITO_PANTANEIRA"
+      ],
+      "aliases": {}
+    },
+    "sdb_nom_tema": {
+      "accepted_values": [
+        "Area de Uso Restrito para declividade de 25 a 45 graus",
+        "Area de Uso Restrito para regioes pantaneiras"
+      ],
+      "aliases": {}
+    },
+    "sdb_ind_status": {
+      "accepted_values": [
+        "AT",
+        "CA",
+        "PE"
+      ],
+      "aliases": {}
+    },
+    "sdb_desc_condic": {
+      "accepted_values": [
+        "Aguardando analise",
+        "Analisado, aguardando atendimento a notificacao",
+        "Cancelado por decisao administrativa",
+        "Cancelado por duplicidade",
+        "Em analise"
+      ],
+      "aliases": {}
+    }
+  }
+}
