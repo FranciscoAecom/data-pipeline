@@ -18,16 +18,22 @@
       "accepted_values": [
         "AT",
         "CA",
-        "PE"
+        "PE",
+        "SU"
       ],
       "aliases": {}
     },
-    "sdb_desc_condic": {
+    "sdb_des_condic": {
       "accepted_values": [
         "Aguardando analise",
+        "Aguardando analise, apos revisao ou atendimento da notificacao",
         "Analisado, aguardando atendimento a notificacao",
+        "Analisado, aguardando regularizacao ambiental (Lei n 12.651/2012)",
+        "Analisado, em conformidade com a Lei n 12.651/2012",
+        "Analisado, em conformidade com a Lei n 12.651/2012, com ativos ambientais",
         "Cancelado por decisao administrativa",
         "Cancelado por duplicidade",
+        "Cancelado por solicitacao do proprietario/possuidor",
         "Em analise"
       ],
       "aliases": {}

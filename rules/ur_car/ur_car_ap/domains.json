@@ -22,12 +22,15 @@
       ],
       "aliases": {}
     },
-    "sdb_desc_condic": {
+    "sdb_des_condic": {
       "accepted_values": [
         "Aguardando analise",
         "Analisado, aguardando atendimento a notificacao",
+        "Analisado, aguardando regularizacao ambiental (Lei n 12.651/2012)",
         "Cancelado por decisao administrativa",
+        "Cancelado por decisao judicial",
         "Cancelado por duplicidade",
+        "Cancelado por solicitacao do proprietario/possuidor",
         "Em analise"
       ],
       "aliases": {}
