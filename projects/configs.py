@@ -43,7 +43,7 @@ PROJECT_CONFIGS = {
         "display_name": "Area de Uso Restrito nos imoveis rurais",
         "theme_prefixes": ("ur_car_",),
         "output_name_template": "pol_pcd_{theme_folder}_{date_yyyymmdd}",
-        "reference_date": "20260301",
+        "reference_date": "20260514",
     },
     "autorizacao_para_supressao_vegetal": {
         "project_name": "autorizacao_para_supressao_vegetal",
